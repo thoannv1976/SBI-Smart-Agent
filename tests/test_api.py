@@ -11,16 +11,19 @@ from pathlib import Path
 os.environ.pop("ANTHROPIC_API_KEY", None)  # ép demo mode
 os.environ.pop("SBI_LEADS_WEBHOOK_URL", None)  # không gọi webhook khi test
 os.environ["SBI_USE_FIRESTORE"] = "0"  # ép FileStore khi test
+os.environ["SBI_USE_SECRET_MANAGER"] = "0"  # tắt Secret Manager khi test
 os.environ["SBI_ADMIN_TOKEN"] = "test-token"  # bật admin để test
 
 # Dùng file tạm (slate sạch) để không tạo rác trong repo
 _tmp = Path(tempfile.gettempdir())
 _leads = _tmp / "sbi_test_leads.jsonl"
 _qa = _tmp / "sbi_test_qa_overrides.jsonl"
-for _f in (_leads, _qa):
+_cfg = _tmp / "sbi_test_app_settings.json"
+for _f in (_leads, _qa, _cfg):
     _f.unlink(missing_ok=True)
 os.environ["SBI_LEADS_FILE"] = str(_leads)
 os.environ["SBI_QA_OVERRIDES_FILE"] = str(_qa)
+os.environ["SBI_SETTINGS_FILE"] = str(_cfg)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -200,3 +203,50 @@ def test_admin_leads_list():
 def test_admin_page_served():
     r = client.get("/admin")
     assert r.status_code == 200
+
+
+# ----------------------------- Admin: cấu hình -----------------------------
+
+
+def test_admin_settings_get():
+    r = client.get("/api/admin/settings", headers=ADMIN)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["api_key"]["configured"] is False  # demo, chưa có key
+    assert body["api_key"]["secret_manager_available"] is False
+    assert body["model"]
+    assert isinstance(body["available_models"], list) and body["available_models"]
+    assert body["storage"] == "file"
+
+
+def test_admin_settings_set_model():
+    r = client.post(
+        "/api/admin/settings", headers=ADMIN, json={"model": "claude-haiku-4-5-20251001"}
+    )
+    assert r.status_code == 200
+    assert r.json()["model"] == "claude-haiku-4-5-20251001"
+    # phản ánh ở lần đọc sau
+    assert client.get("/api/admin/settings", headers=ADMIN).json()["model"] == "claude-haiku-4-5-20251001"
+    # trả lại mặc định để không ảnh hưởng test khác
+    client.post("/api/admin/settings", headers=ADMIN, json={"model": "claude-sonnet-4-6"})
+
+
+def test_admin_settings_api_key_without_secret_manager():
+    # Secret Manager bị tắt khi test -> phải báo 503 rõ ràng, không phải 500
+    r = client.post("/api/admin/settings", headers=ADMIN, json={"api_key": "sk-ant-test"})
+    assert r.status_code == 503
+
+
+def test_admin_settings_validation():
+    assert client.post("/api/admin/settings", headers=ADMIN, json={"temperature": 5}).status_code == 422
+    assert client.post("/api/admin/settings", headers=ADMIN, json={"max_tokens": 0}).status_code == 422
+
+
+def test_admin_test_connection_demo():
+    r = client.post("/api/admin/settings/test", headers=ADMIN)
+    assert r.status_code == 200
+    assert r.json()["ok"] is False  # chưa có key
+
+
+def test_admin_settings_requires_token():
+    assert client.get("/api/admin/settings").status_code == 401

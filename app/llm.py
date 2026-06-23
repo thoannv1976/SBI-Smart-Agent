@@ -14,6 +14,7 @@ from typing import AsyncIterator
 
 from .config import Settings, get_settings
 from .knowledge import get_cached_system_prompt, load_qa_items
+from .runtime import get_runtime_config
 
 # ----------------------------- Tiện ích chung -----------------------------
 
@@ -99,8 +100,10 @@ async def stream_reply(
     if not messages:
         return
 
+    rc = get_runtime_config()
+
     # --- Demo mode: chưa có API key ---
-    if not settings.has_api_key:
+    if not rc.has_api_key:
         reply = _demo_reply(messages[-1]["content"])
         # Trả về theo từng cụm nhỏ để UI vẫn có hiệu ứng streaming.
         for chunk in re.findall(r"\S+\s*", reply):
@@ -110,7 +113,7 @@ async def stream_reply(
     # --- Gọi Claude thật ---
     from anthropic import AsyncAnthropic
 
-    client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    client = AsyncAnthropic(api_key=rc.api_key)
     system_blocks = [
         {
             "type": "text",
@@ -120,9 +123,9 @@ async def stream_reply(
     ]
 
     async with client.messages.stream(
-        model=settings.model,
-        max_tokens=settings.max_tokens,
-        temperature=settings.temperature,
+        model=rc.model,
+        max_tokens=rc.max_tokens,
+        temperature=rc.temperature,
         system=system_blocks,
         messages=messages,
     ) as stream:

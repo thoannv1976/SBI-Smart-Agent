@@ -36,6 +36,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="qa" type="button">Kho tri thức (Q&amp;A)</button>
       <button class="tab" data-tab="leads" type="button">Đăng ký tư vấn</button>
+      <button class="tab" data-tab="settings" type="button">Cấu hình</button>
     </nav>
 
     <!-- Tab Q&A -->
@@ -58,6 +59,38 @@
         <button id="leadsCsv" class="ghost-btn" type="button">⤓ Xuất CSV</button>
       </div>
       <div id="leadsTableWrap" class="table-wrap"></div>
+    </section>
+
+    <!-- Tab Cấu hình -->
+    <section id="tab-settings" class="tab-panel" hidden>
+      <div class="settings-card">
+        <h3>🔑 Kết nối Claude API</h3>
+        <p id="keyStatus" class="muted"></p>
+        <p id="smWarn" class="warn" hidden></p>
+        <label>Claude API key
+          <input id="setApiKey" type="password" autocomplete="off"
+                 placeholder="sk-ant-... (để trống nếu không đổi)" />
+        </label>
+
+        <h3 style="margin-top:20px">⚙️ Tham số trả lời</h3>
+        <label>Model
+          <select id="setModel"></select>
+        </label>
+        <div class="row2">
+          <label>Max tokens
+            <input id="setMaxTokens" type="number" min="1" max="8192" />
+          </label>
+          <label>Temperature (0–1)
+            <input id="setTemp" type="number" min="0" max="1" step="0.1" />
+          </label>
+        </div>
+
+        <div class="settings-actions">
+          <button id="saveSettings" class="primary-btn" type="button">Lưu cấu hình</button>
+          <button id="testConn" class="ghost-btn" type="button">Kiểm tra kết nối</button>
+        </div>
+        <p id="settingsMsg" class="lead-msg" role="status" hidden></p>
+      </div>
     </section>
   </div>
 

@@ -18,7 +18,7 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 - ⚡ **Prompt caching** của Claude: nạp toàn bộ tri thức vào ngữ cảnh nhưng vẫn rẻ & nhanh.
 - ✨ **Gợi ý câu hỏi** theo nhóm chủ đề, giữ ngữ cảnh hội thoại nhiều lượt.
 - 📞 **Đăng ký tư vấn (lead capture)**: thu thập thông tin khách quan tâm, lưu vào Cloud Logging và (tuỳ chọn) Google Sheet.
-- 🛠️ **Trang quản trị `/admin`**: xem danh sách lead, thêm/sửa/xoá Q&A **không cần deploy lại**.
+- 🛠️ **Trang quản trị `/admin`**: xem lead, thêm/sửa/xoá Q&A, **nạp Claude API key & chọn model** — tất cả ngay trên web, không cần deploy lại.
 - 💾 **Lưu trữ bền vững (Firestore)**: lead & Q&A không mất khi Cloud Run tái tạo instance (tự fallback file khi chạy local).
 - 🧪 **Demo mode**: chạy được ngay cả khi chưa có API key (truy hồi câu trả lời từ dataset).
 
@@ -124,6 +124,9 @@ qua **Cloud Build** → deploy lên **Cloud Run** và in ra URL dịch vụ.
 | `SBI_ADMIN_TOKEN` | *(trống)* | Token bảo vệ `/admin`. Trống → trang quản trị bị tắt. |
 | `SBI_USE_FIRESTORE` | `auto` | `auto`/`1`/`0` — dùng Firestore hay file cục bộ. |
 | `SBI_FIRESTORE_PROJECT` | *(trống)* | Project GCP chứa Firestore (Cloud Run đặt sẵn trong `deploy.sh`). |
+| `SBI_USE_SECRET_MANAGER` | `auto` | Cho phép nạp API key từ `/admin` (lưu Secret Manager). |
+| `SBI_GCP_PROJECT` | *(trống)* | Project GCP cho Secret Manager (`deploy.sh` đặt sẵn). |
+| `SBI_API_KEY_SECRET` | `anthropic-api-key` | Tên secret chứa Claude API key. |
 | `PORT` | `8080` | Cổng server (Cloud Run tự cấp). |
 
 ## 🔁 Cập nhật dữ liệu Q&A
@@ -173,6 +176,9 @@ Truy cập `https://<service-url>/admin`, đăng nhập bằng `SBI_ADMIN_TOKEN`
   cho chatbot (system prompt được dựng lại), không cần deploy lại. Mỗi mục có nhãn
   *Gốc / Đã sửa / Tự thêm* để dễ theo dõi.
 - **Đăng ký tư vấn**: xem danh sách lead, gọi/email nhanh, **xuất CSV**.
+- **Cấu hình**: nạp/đổi **Claude API key** (ghi vào Secret Manager, *có hiệu lực ngay*
+  không cần deploy lại), chọn **model**, chỉnh `max_tokens`/`temperature`, và **kiểm
+  tra kết nối**. API không bao giờ trả về key đầy đủ (chỉ hiển thị che `sk-ant…wxyz`).
 
 > Bảo mật: để trống `SBI_ADMIN_TOKEN` thì toàn bộ `/api/admin/*` trả về 503 (tắt).
 > Hãy đặt token đủ mạnh khi bật.
@@ -190,6 +196,10 @@ các instance. Cơ chế chọn kho lưu trữ (`SBI_USE_FIRESTORE`):
 `deploy.sh` (mặc định `USE_FIRESTORE=1`) sẽ tự **bật Firestore API**, **tạo
 database** và **cấp quyền** cho service account của Cloud Run. Nếu muốn dùng file
 thay vì Firestore: `USE_FIRESTORE=0 ./deploy.sh`.
+
+> 🔑 **API key** được lưu riêng trong **Secret Manager** (không phải Firestore) cho
+> an toàn. `deploy.sh` tự tạo secret + cấp quyền đọc/ghi cho Cloud Run, nên bạn có
+> thể **nạp key trực tiếp ở trang `/admin`** mà không cần dùng dòng lệnh.
 
 ## 🔌 API
 

@@ -54,6 +54,11 @@ class Settings:
     qa_overrides_file: Path = Path(
         os.getenv("SBI_QA_OVERRIDES_FILE", str(BASE_DIR / "data" / "qa_overrides.jsonl"))
     )
+    # File cấu hình runtime (model/temperature...) do admin chỉnh, khi dùng
+    # FileStore (local). Khi bật Firestore thì lưu vào collection cấu hình.
+    settings_file: Path = Path(
+        os.getenv("SBI_SETTINGS_FILE", str(BASE_DIR / "data" / "app_settings.json"))
+    )
 
     # --- Lưu trữ bền vững (Firestore) ---
     # "auto" (mặc định): bật Firestore nếu có thư viện + project GCP; ngược lại
@@ -64,10 +69,26 @@ class Settings:
     )
     firestore_leads_collection: str = os.getenv("SBI_FS_LEADS", "sbi_leads")
     firestore_qa_collection: str = os.getenv("SBI_FS_QA", "sbi_qa_overrides")
+    firestore_config_collection: str = os.getenv("SBI_FS_CONFIG", "sbi_config")
 
     # --- Trang quản trị (/admin) ---
     # Token bảo vệ các API /api/admin/*. Để trống => admin bị TẮT (an toàn mặc định).
     admin_token: str = os.getenv("SBI_ADMIN_TOKEN", "")
+
+    # --- API key qua Secret Manager (cho phép nạp key từ /admin) ---
+    # "auto": dùng Secret Manager nếu có project GCP + thư viện; ngược lại bỏ qua.
+    use_secret_manager: str = os.getenv("SBI_USE_SECRET_MANAGER", "auto")
+    gcp_project: str = os.getenv(
+        "SBI_GCP_PROJECT",
+        os.getenv("SBI_FIRESTORE_PROJECT", os.getenv("GOOGLE_CLOUD_PROJECT", "")),
+    )
+    api_key_secret: str = os.getenv("SBI_API_KEY_SECRET", "anthropic-api-key")
+    # Danh sách model cho admin chọn (hiển thị trong trang Cấu hình).
+    available_models: tuple[str, ...] = (
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001",
+        "claude-opus-4-8",
+    )
 
     # --- Server ---
     # Cloud Run cấp PORT qua biến môi trường (mặc định 8080).

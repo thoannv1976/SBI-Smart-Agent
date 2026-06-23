@@ -41,31 +41,30 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   firestore.googleapis.com
 
-# 3) Lưu API key vào Secret Manager (nếu cung cấp qua biến môi trường)
+# 3) Đảm bảo secret tồn tại (để trang /admin nạp key sau) + thêm version nếu có key
+echo "▶ Thiết lập secret '$SECRET_NAME'…"
+if ! gcloud secrets describe "$SECRET_NAME" >/dev/null 2>&1; then
+  gcloud secrets create "$SECRET_NAME" --replication-policy=automatic
+fi
 if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
-  echo "▶ Cập nhật secret '$SECRET_NAME'…"
-  if gcloud secrets describe "$SECRET_NAME" >/dev/null 2>&1; then
-    printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets versions add "$SECRET_NAME" --data-file=-
-  else
-    printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create "$SECRET_NAME" \
-      --data-file=- --replication-policy=automatic
-  fi
-else
-  echo "⚠ Chưa set ANTHROPIC_API_KEY. Bỏ qua bước tạo secret."
-  echo "  (App sẽ chạy ở 'demo mode' nếu secret chưa tồn tại.)"
+  printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets versions add "$SECRET_NAME" --data-file=-
 fi
 
-# 4) Cấp quyền cho service account runtime đọc secret
-if gcloud secrets describe "$SECRET_NAME" >/dev/null 2>&1; then
-  PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-  RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-  echo "▶ Cấp quyền đọc secret cho $RUNTIME_SA…"
+# 4) Cấp quyền cho service account runtime: ĐỌC key + THÊM version (nạp key từ /admin)
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+echo "▶ Cấp quyền secret cho $RUNTIME_SA…"
+for ROLE in roles/secretmanager.secretAccessor roles/secretmanager.secretVersionAdder; do
   gcloud secrets add-iam-policy-binding "$SECRET_NAME" \
-    --member="serviceAccount:${RUNTIME_SA}" \
-    --role="roles/secretmanager.secretAccessor" >/dev/null 2>&1 || true
+    --member="serviceAccount:${RUNTIME_SA}" --role="$ROLE" >/dev/null 2>&1 || true
+done
+
+# Chỉ inject secret thành biến môi trường nếu đã có version (tránh deploy lỗi)
+if gcloud secrets versions access latest --secret="$SECRET_NAME" >/dev/null 2>&1; then
   SECRET_FLAG=(--set-secrets "ANTHROPIC_API_KEY=${SECRET_NAME}:latest")
 else
   SECRET_FLAG=()
+  echo "  (Secret chưa có version — app chạy demo cho tới khi bạn nạp key trong /admin.)"
 fi
 
 # 4b) Firestore (lưu lead & Q&A bền vững giữa các lần deploy / nhiều instance)
@@ -81,6 +80,9 @@ if [[ "$USE_FIRESTORE" == "1" ]]; then
     --role="roles/datastore.user" >/dev/null 2>&1 || true
   ENV_VARS="${ENV_VARS}##SBI_USE_FIRESTORE=auto##SBI_FIRESTORE_PROJECT=${PROJECT_ID}"
 fi
+
+# Secret Manager cho phép nạp/đọc API key lúc chạy (từ trang /admin)
+ENV_VARS="${ENV_VARS}##SBI_USE_SECRET_MANAGER=auto##SBI_GCP_PROJECT=${PROJECT_ID}##SBI_API_KEY_SECRET=${SECRET_NAME}"
 
 # Token quản trị (bật trang /admin) nếu được cung cấp
 if [[ -n "${SBI_ADMIN_TOKEN:-}" ]]; then

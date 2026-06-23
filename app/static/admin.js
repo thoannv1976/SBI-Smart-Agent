@@ -78,6 +78,8 @@
       const t = btn.dataset.tab;
       $("tab-qa").hidden = t !== "qa";
       $("tab-leads").hidden = t !== "leads";
+      $("tab-settings").hidden = t !== "settings";
+      if (t === "settings") loadSettings();
     });
   });
 
@@ -256,6 +258,90 @@
     a.click();
     URL.revokeObjectURL(a.href);
   });
+
+  // ----------------------------- Cấu hình -----------------------------
+  function fillModels(models, selected) {
+    const sel = $("setModel");
+    const list = models || [];
+    sel.innerHTML = list.map((m) => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+    if (selected && !list.includes(selected)) {
+      sel.innerHTML += `<option value="${esc(selected)}">${esc(selected)}</option>`;
+    }
+    if (selected) sel.value = selected;
+  }
+
+  async function loadSettings() {
+    try {
+      const d = await (await api("/api/admin/settings")).json();
+      const k = d.api_key || {};
+      $("keyStatus").innerHTML = k.configured
+        ? `Đã cấu hình: <b>${esc(k.masked)}</b> <span class="muted">(nguồn: ${esc(k.source)})</span>`
+        : "Chưa cấu hình API key — chatbot đang chạy ở chế độ <b>demo</b>.";
+      const warn = $("smWarn");
+      if (!k.secret_manager_available) {
+        warn.hidden = false;
+        warn.textContent =
+          "⚠️ Secret Manager chưa sẵn sàng ở môi trường này — nhập key trên web sẽ KHÔNG lưu được. " +
+          "Hãy đặt qua biến môi trường ANTHROPIC_API_KEY, hoặc deploy trên Cloud Run (deploy.sh đã bật Secret Manager).";
+      } else {
+        warn.hidden = true;
+      }
+      fillModels(d.available_models, d.model);
+      $("setMaxTokens").value = d.max_tokens;
+      $("setTemp").value = d.temperature;
+      $("setApiKey").value = "";
+    } catch (err) {
+      showLogin(err.message);
+    }
+  }
+
+  async function saveSettings() {
+    const payload = {
+      api_key: $("setApiKey").value.trim(),
+      model: $("setModel").value,
+      max_tokens: parseInt($("setMaxTokens").value, 10),
+      temperature: parseFloat($("setTemp").value),
+    };
+    const msg = $("settingsMsg");
+    msg.hidden = true;
+    $("saveSettings").disabled = true;
+    try {
+      const r = await api("/api/admin/settings", { method: "POST", body: JSON.stringify(payload) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Lưu thất bại");
+      msg.className = "lead-msg ok";
+      msg.textContent = "✓ Đã lưu cấu hình.";
+      msg.hidden = false;
+      loadSettings();
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+      msg.hidden = false;
+    } finally {
+      $("saveSettings").disabled = false;
+    }
+  }
+
+  async function testConn() {
+    const msg = $("settingsMsg");
+    msg.hidden = false;
+    msg.className = "lead-msg";
+    msg.textContent = "Đang kiểm tra…";
+    $("testConn").disabled = true;
+    try {
+      const d = await (await api("/api/admin/settings/test", { method: "POST", body: "{}" })).json();
+      msg.className = "lead-msg " + (d.ok ? "ok" : "err");
+      msg.textContent = (d.ok ? "✓ " : "⚠️ ") + d.message;
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+    } finally {
+      $("testConn").disabled = false;
+    }
+  }
+
+  $("saveSettings").addEventListener("click", saveSettings);
+  $("testConn").addEventListener("click", testConn);
 
   // ----------------------------- Khởi động -----------------------------
   document.addEventListener("keydown", (e) => {

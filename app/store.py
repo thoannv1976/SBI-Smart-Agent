@@ -27,6 +27,7 @@ class FileStore:
     def __init__(self, settings: Settings):
         self.leads_file = settings.leads_file
         self.qa_file = settings.qa_overrides_file
+        self.config_file = settings.settings_file
 
     # ----- Leads -----
     def add_lead(self, lead: dict) -> None:
@@ -87,6 +88,23 @@ class FileStore:
         data[qa_id] = {"id": qa_id, "deleted": True}
         self._write_qa_map(data)
 
+    # ----- Cấu hình runtime -----
+    def get_config(self) -> dict:
+        if not self.config_file.exists():
+            return {}
+        try:
+            return json.loads(self.config_file.read_text(encoding="utf-8")) or {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def set_config(self, data: dict) -> None:
+        current = self.get_config()
+        current.update(data)
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        self.config_file.write_text(
+            json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
 
 # --------------------------------------------------------------------------
 # FirestoreStore - lưu vào Google Cloud Firestore
@@ -103,6 +121,7 @@ class FirestoreStore:
         self._db = firestore.Client(**kwargs)
         self._leads = settings.firestore_leads_collection
         self._qa = settings.firestore_qa_collection
+        self._cfg = settings.firestore_config_collection
 
     # ----- Leads -----
     def add_lead(self, lead: dict) -> None:
@@ -129,6 +148,14 @@ class FirestoreStore:
         self._db.collection(self._qa).document(qa_id).set(
             {"id": qa_id, "deleted": True}
         )
+
+    # ----- Cấu hình runtime -----
+    def get_config(self) -> dict:
+        doc = self._db.collection(self._cfg).document("app").get()
+        return doc.to_dict() or {} if doc.exists else {}
+
+    def set_config(self, data: dict) -> None:
+        self._db.collection(self._cfg).document("app").set(data, merge=True)
 
 
 # --------------------------------------------------------------------------

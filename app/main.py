@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from . import apikey
 from .config import get_settings
 from .knowledge import (
     CATEGORY_LABELS,
@@ -25,6 +26,7 @@ from .knowledge import (
 )
 from .leads import save_lead
 from .llm import stream_reply
+from .runtime import get_runtime_config
 from .store import get_store
 
 logging.basicConfig(level=logging.INFO)
@@ -79,6 +81,13 @@ class QARequest(BaseModel):
     answer: str = Field(..., description="Câu trả lời")
 
 
+class SettingsRequest(BaseModel):
+    api_key: str = Field("", description="Claude API key (để trống nếu không đổi)")
+    model: str = Field("", description="Model Claude (để trống nếu không đổi)")
+    max_tokens: int | None = Field(None, description="Độ dài tối đa câu trả lời")
+    temperature: float | None = Field(None, description="Độ sáng tạo 0..1")
+
+
 # ----------------------------- Admin auth -----------------------------
 
 
@@ -99,10 +108,11 @@ def require_admin(x_admin_token: str = Header(default="")) -> None:
 @app.get("/healthz")
 def healthz() -> dict:
     """Health check cho Cloud Run."""
+    rc = get_runtime_config()
     return {
         "status": "ok",
-        "model": settings.model,
-        "api_key_configured": settings.has_api_key,
+        "model": rc.model,
+        "api_key_configured": rc.has_api_key,
     }
 
 
@@ -191,6 +201,77 @@ async def admin_upsert_qa(req: QARequest) -> dict:
 async def admin_delete_qa(qa_id: str) -> dict:
     await asyncio.to_thread(delete_qa, qa_id)
     return {"ok": True}
+
+
+@app.get("/api/admin/settings", dependencies=[Depends(require_admin)])
+def admin_get_settings() -> dict:
+    rc = get_runtime_config()
+    return {
+        "api_key": apikey.api_key_status(settings),
+        "model": rc.model,
+        "max_tokens": rc.max_tokens,
+        "temperature": rc.temperature,
+        "available_models": list(settings.available_models),
+        "storage": get_store().backend,
+    }
+
+
+@app.post("/api/admin/settings", dependencies=[Depends(require_admin)])
+async def admin_set_settings(req: SettingsRequest) -> dict:
+    if req.max_tokens is not None and not (1 <= req.max_tokens <= 8192):
+        raise HTTPException(status_code=422, detail="max_tokens phải trong khoảng 1..8192.")
+    if req.temperature is not None and not (0.0 <= req.temperature <= 1.0):
+        raise HTTPException(status_code=422, detail="temperature phải trong khoảng 0..1.")
+
+    # 1) API key (nếu có nhập) -> Secret Manager
+    if req.api_key.strip():
+        try:
+            await asyncio.to_thread(apikey.set_api_key, req.api_key, settings)
+        except (RuntimeError, ValueError) as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
+        except Exception as exc:
+            logger.exception("Lỗi ghi API key vào Secret Manager")
+            raise HTTPException(status_code=500, detail=f"Không ghi được API key: {exc}")
+
+    # 2) Cấu hình khác -> store (Firestore/file)
+    cfg: dict = {}
+    if req.model.strip():
+        cfg["model"] = req.model.strip()
+    if req.max_tokens is not None:
+        cfg["max_tokens"] = int(req.max_tokens)
+    if req.temperature is not None:
+        cfg["temperature"] = float(req.temperature)
+    if cfg:
+        await asyncio.to_thread(get_store().set_config, cfg)
+
+    rc = get_runtime_config()
+    return {
+        "ok": True,
+        "api_key": apikey.api_key_status(settings),
+        "model": rc.model,
+        "max_tokens": rc.max_tokens,
+        "temperature": rc.temperature,
+    }
+
+
+@app.post("/api/admin/settings/test", dependencies=[Depends(require_admin)])
+async def admin_test_connection() -> dict:
+    """Gọi thử Claude bằng key hiện tại để xác nhận kết nối."""
+    rc = get_runtime_config()
+    if not rc.has_api_key:
+        return {"ok": False, "message": "Chưa cấu hình API key."}
+    try:
+        from anthropic import AsyncAnthropic
+
+        client = AsyncAnthropic(api_key=rc.api_key)
+        await client.messages.create(
+            model=rc.model,
+            max_tokens=4,
+            messages=[{"role": "user", "content": "ping"}],
+        )
+        return {"ok": True, "message": f"Kết nối thành công (model {rc.model})."}
+    except Exception as exc:
+        return {"ok": False, "message": f"Kết nối thất bại: {exc}"}
 
 
 # Trang quản trị

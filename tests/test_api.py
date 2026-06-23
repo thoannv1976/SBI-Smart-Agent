@@ -10,9 +10,21 @@ from pathlib import Path
 
 os.environ.pop("ANTHROPIC_API_KEY", None)  # ép demo mode
 os.environ.pop("SBI_LEADS_WEBHOOK_URL", None)  # không gọi webhook khi test
-# Ghi lead vào file tạm để không tạo rác trong repo
-os.environ["SBI_LEADS_FILE"] = str(Path(tempfile.gettempdir()) / "sbi_test_leads.jsonl")
+os.environ["SBI_USE_FIRESTORE"] = "0"  # ép FileStore khi test
+os.environ["SBI_ADMIN_TOKEN"] = "test-token"  # bật admin để test
+
+# Dùng file tạm (slate sạch) để không tạo rác trong repo
+_tmp = Path(tempfile.gettempdir())
+_leads = _tmp / "sbi_test_leads.jsonl"
+_qa = _tmp / "sbi_test_qa_overrides.jsonl"
+for _f in (_leads, _qa):
+    _f.unlink(missing_ok=True)
+os.environ["SBI_LEADS_FILE"] = str(_leads)
+os.environ["SBI_QA_OVERRIDES_FILE"] = str(_qa)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+ADMIN = {"X-Admin-Token": "test-token"}
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -126,3 +138,65 @@ def test_lead_missing_name():
 def test_lead_invalid_phone():
     r = client.post("/api/lead", json={"name": "Trần B", "phone": "123"})
     assert r.status_code == 422
+
+
+# ----------------------------- Admin -----------------------------
+
+
+def test_admin_requires_token():
+    assert client.get("/api/admin/qa").status_code == 401
+    assert client.get("/api/admin/leads").status_code == 401
+
+
+def test_admin_check():
+    r = client.get("/api/admin/check", headers=ADMIN)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["storage"] == "file"
+
+
+def test_admin_qa_add_edit_delete():
+    # Thêm mới
+    r = client.post(
+        "/api/admin/qa",
+        headers=ADMIN,
+        json={"category": "tuyen_sinh", "question": "Câu hỏi kiểm thử?", "answer": "Trả lời kiểm thử."},
+    )
+    assert r.status_code == 200
+    new_id = r.json()["item"]["id"]
+    assert new_id.startswith("sbi-x")
+
+    # Có trong danh sách với nguồn "custom"
+    items = {it["id"]: it for it in client.get("/api/admin/qa", headers=ADMIN).json()["items"]}
+    assert items[new_id]["source"] == "custom"
+
+    # Cập nhật -> phản ánh vào system prompt
+    r = client.post(
+        "/api/admin/qa",
+        headers=ADMIN,
+        json={"id": new_id, "category": "tuyen_sinh", "question": "Câu hỏi kiểm thử?", "answer": "Đã cập nhật nội dung."},
+    )
+    assert r.status_code == 200
+    assert "Đã cập nhật nội dung." in build_system_prompt()
+
+    # Xoá
+    assert client.delete(f"/api/admin/qa/{new_id}", headers=ADMIN).status_code == 200
+    after = {it["id"] for it in client.get("/api/admin/qa", headers=ADMIN).json()["items"]}
+    assert new_id not in after
+
+
+def test_admin_qa_validation():
+    r = client.post("/api/admin/qa", headers=ADMIN, json={"question": "x", "answer": ""})
+    assert r.status_code == 422
+
+
+def test_admin_leads_list():
+    r = client.get("/api/admin/leads", headers=ADMIN)
+    assert r.status_code == 200
+    assert isinstance(r.json()["leads"], list)
+
+
+def test_admin_page_served():
+    r = client.get("/admin")
+    assert r.status_code == 200

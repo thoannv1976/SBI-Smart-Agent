@@ -49,6 +49,25 @@ class Settings:
     leads_file: Path = Path(
         os.getenv("SBI_LEADS_FILE", str(BASE_DIR / "data" / "leads.jsonl"))
     )
+    # File lưu các Q&A do admin thêm/sửa/xoá (override lên dataset gốc) khi dùng
+    # FileStore (local dev). Khi bật Firestore thì dùng collection thay cho file.
+    qa_overrides_file: Path = Path(
+        os.getenv("SBI_QA_OVERRIDES_FILE", str(BASE_DIR / "data" / "qa_overrides.jsonl"))
+    )
+
+    # --- Lưu trữ bền vững (Firestore) ---
+    # "auto" (mặc định): bật Firestore nếu có thư viện + project GCP; ngược lại
+    # dùng file cục bộ. Đặt "1"/"0" để ép bật/tắt.
+    use_firestore: str = os.getenv("SBI_USE_FIRESTORE", "auto")
+    firestore_project: str = os.getenv(
+        "SBI_FIRESTORE_PROJECT", os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    )
+    firestore_leads_collection: str = os.getenv("SBI_FS_LEADS", "sbi_leads")
+    firestore_qa_collection: str = os.getenv("SBI_FS_QA", "sbi_qa_overrides")
+
+    # --- Trang quản trị (/admin) ---
+    # Token bảo vệ các API /api/admin/*. Để trống => admin bị TẮT (an toàn mặc định).
+    admin_token: str = os.getenv("SBI_ADMIN_TOKEN", "")
 
     # --- Server ---
     # Cloud Run cấp PORT qua biến môi trường (mặc định 8080).

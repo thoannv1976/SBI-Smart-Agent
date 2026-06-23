@@ -1,0 +1,106 @@
+/* Trang quản trị SBI - dùng chung biến màu với style.css */
+
+.admin-body { min-height: 100dvh; padding: 0; }
+.muted { color: var(--ink-soft); font-size: 13px; }
+.spacer { flex: 1; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-size: .9em; }
+
+/* Nút dùng chung */
+.primary-btn {
+  border: none; border-radius: 10px; cursor: pointer; font-family: inherit;
+  font-size: 14px; font-weight: 600; padding: 9px 16px;
+  background: var(--brand-grad); color: #fff; white-space: nowrap;
+  transition: transform .15s, opacity .2s;
+}
+.primary-btn:hover { transform: translateY(-1px); }
+.primary-btn:disabled { opacity: .55; cursor: not-allowed; }
+.ghost-btn {
+  border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 8px 13px;
+  background: var(--surface); color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.ghost-btn:hover { background: var(--surface-2); }
+
+/* ---------------- Đăng nhập ---------------- */
+.admin-login { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card {
+  width: 100%; max-width: 360px; background: var(--surface);
+  border-radius: 18px; box-shadow: var(--shadow); padding: 30px 26px;
+  display: flex; flex-direction: column; gap: 12px; text-align: center;
+}
+.login-logo {
+  width: 54px; height: 54px; margin: 0 auto; border-radius: 14px;
+  background: var(--brand-grad); color: #fff; font-weight: 800; letter-spacing: .5px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.login-card h1 { font-size: 20px; }
+.login-card input {
+  font-family: inherit; font-size: 15px; padding: 11px 13px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); outline: none;
+}
+.login-card input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.12); background: #fff; }
+
+/* ---------------- App ---------------- */
+.admin-app { max-width: 1000px; margin: 0 auto; min-height: 100dvh; background: var(--surface); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.admin-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 20px; color: #fff; background: var(--brand-grad);
+}
+.admin-brand { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+.admin-brand .logo {
+  background: rgba(255,255,255,.2); border-radius: 8px; padding: 3px 8px; font-size: 13px; font-weight: 800;
+}
+.admin-head-right { display: flex; align-items: center; gap: 8px; }
+.admin-head-right .ghost-btn { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.35); color: #fff; }
+.admin-head-right .ghost-btn:hover { background: rgba(255,255,255,.3); }
+.badge {
+  font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+  background: rgba(255,255,255,.2); color: #fff; text-transform: uppercase; letter-spacing: .4px;
+}
+
+.tabs { display: flex; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--border); }
+.tab {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 14.5px; font-weight: 600; color: var(--ink-soft);
+  padding: 10px 16px; border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+.tab-panel { padding: 16px 20px 28px; }
+.panel-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.panel-toolbar input[type="search"] {
+  flex: 1; min-width: 200px; font-family: inherit; font-size: 14px;
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); outline: none;
+}
+.panel-toolbar input[type="search"]:focus { border-color: var(--brand); background: #fff; }
+
+/* ---------------- Danh sách Q&A ---------------- */
+.qa-list { display: flex; flex-direction: column; gap: 10px; }
+.qa-card { border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; background: var(--surface); }
+.qa-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.qa-cat { font-size: 11.5px; font-weight: 700; color: var(--brand); background: #eef2ff; padding: 3px 9px; border-radius: 999px; }
+.qa-src { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.qa-src.base { background: #f1f5f9; color: #64748b; }
+.qa-src.edited { background: #fef3c7; color: #b45309; }
+.qa-src.custom { background: #dcfce7; color: #15803d; }
+.qa-q { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+.qa-a { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; }
+.qa-actions { display: flex; gap: 6px; margin-left: auto; }
+.icon-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; padding: 5px 10px; color: var(--ink); }
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn.danger { color: #dc2626; border-color: #fecaca; }
+.icon-btn.danger:hover { background: #fef2f2; }
+
+/* ---------------- Bảng Lead ---------------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+table.leads { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.leads th, table.leads td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.leads th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--ink-soft); white-space: nowrap; }
+table.leads tr:last-child td { border-bottom: none; }
+table.leads a { color: var(--brand); text-decoration: none; }
+.empty { text-align: center; color: var(--ink-soft); padding: 36px 12px; font-size: 14px; }
+
+@media (max-width: 640px) {
+  .admin-brand { font-size: 15px; }
+  .admin-head-right a.ghost-btn { display: none; }
+}

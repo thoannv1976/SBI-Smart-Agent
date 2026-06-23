@@ -18,6 +18,8 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 - ⚡ **Prompt caching** của Claude: nạp toàn bộ tri thức vào ngữ cảnh nhưng vẫn rẻ & nhanh.
 - ✨ **Gợi ý câu hỏi** theo nhóm chủ đề, giữ ngữ cảnh hội thoại nhiều lượt.
 - 📞 **Đăng ký tư vấn (lead capture)**: thu thập thông tin khách quan tâm, lưu vào Cloud Logging và (tuỳ chọn) Google Sheet.
+- 🛠️ **Trang quản trị `/admin`**: xem danh sách lead, thêm/sửa/xoá Q&A **không cần deploy lại**.
+- 💾 **Lưu trữ bền vững (Firestore)**: lead & Q&A không mất khi Cloud Run tái tạo instance (tự fallback file khi chạy local).
 - 🧪 **Demo mode**: chạy được ngay cả khi chưa có API key (truy hồi câu trả lời từ dataset).
 
 ## 🏗️ Kiến trúc
@@ -44,13 +46,15 @@ Trình duyệt ──► Frontend (HTML/CSS/JS) ──► FastAPI (/api/chat, st
 ```
 SBI-Smart-Agent/
 ├── app/
-│   ├── main.py          # FastAPI: /, /api/chat, /api/suggestions, /healthz
+│   ├── main.py          # FastAPI: /, /admin, /api/chat, /api/lead, /api/admin/*
 │   ├── config.py        # Cấu hình từ biến môi trường
 │   ├── llm.py           # Client Claude (streaming + caching) + demo mode
-│   ├── knowledge.py     # Nạp Q&A → system prompt
-│   └── static/          # index.html, style.css, app.js
+│   ├── knowledge.py     # Nạp & merge Q&A (gốc + admin) → system prompt
+│   ├── leads.py         # Lưu lead (log + Google Sheet + store)
+│   ├── store.py         # Lưu trữ: Firestore hoặc file (tự fallback)
+│   └── static/          # index.html, app.js, style.css + admin.html/js/css
 ├── data/
-│   ├── sbi_qa_dataset.jsonl   # 50 Q&A (knowledge base)
+│   ├── sbi_qa_dataset.jsonl   # 50 Q&A gốc (knowledge base)
 │   ├── sbi_qa_chat.jsonl      # Định dạng chat (để fine-tune sau)
 │   ├── system_prompt.txt      # System prompt vai trò chatbot
 │   └── build_dataset.py       # Script tái tạo dataset
@@ -117,6 +121,9 @@ qua **Cloud Build** → deploy lên **Cloud Run** và in ra URL dịch vụ.
 | `SBI_TEMPERATURE` | `0.2` | Độ "sáng tạo" (thấp = bám dữ liệu). |
 | `SBI_MAX_HISTORY_TURNS` | `12` | Số lượt hội thoại giữ làm ngữ cảnh. |
 | `SBI_LEADS_WEBHOOK_URL` | *(trống)* | (Tuỳ chọn) URL Google Apps Script để ghi lead vào Google Sheet. |
+| `SBI_ADMIN_TOKEN` | *(trống)* | Token bảo vệ `/admin`. Trống → trang quản trị bị tắt. |
+| `SBI_USE_FIRESTORE` | `auto` | `auto`/`1`/`0` — dùng Firestore hay file cục bộ. |
+| `SBI_FIRESTORE_PROJECT` | *(trống)* | Project GCP chứa Firestore (Cloud Run đặt sẵn trong `deploy.sh`). |
 | `PORT` | `8080` | Cổng server (Cloud Run tự cấp). |
 
 ## 🔁 Cập nhật dữ liệu Q&A
@@ -158,6 +165,32 @@ Khi khách bấm **"Đăng ký tư vấn"** và gửi form, lead được lưu t
    (hoặc thêm vào `deploy.sh`).
 4. Xong — mỗi lead mới sẽ tự xuất hiện thành một dòng trong Google Sheet.
 
+## 🛠️ Trang quản trị (`/admin`)
+
+Truy cập `https://<service-url>/admin`, đăng nhập bằng `SBI_ADMIN_TOKEN`. Tại đây:
+
+- **Kho tri thức (Q&A)**: thêm / sửa / xoá câu hỏi-đáp. Thay đổi áp dụng **ngay**
+  cho chatbot (system prompt được dựng lại), không cần deploy lại. Mỗi mục có nhãn
+  *Gốc / Đã sửa / Tự thêm* để dễ theo dõi.
+- **Đăng ký tư vấn**: xem danh sách lead, gọi/email nhanh, **xuất CSV**.
+
+> Bảo mật: để trống `SBI_ADMIN_TOKEN` thì toàn bộ `/api/admin/*` trả về 503 (tắt).
+> Hãy đặt token đủ mạnh khi bật.
+
+## 💾 Lưu trữ bền vững (Firestore)
+
+Cloud Run là **stateless** — file ghi xuống sẽ mất khi instance tái tạo. Vì vậy
+lead và Q&A chỉnh-sửa được lưu vào **Firestore** để bền vững và dùng chung giữa
+các instance. Cơ chế chọn kho lưu trữ (`SBI_USE_FIRESTORE`):
+
+- `auto` (mặc định): dùng Firestore nếu có `SBI_FIRESTORE_PROJECT` + thư viện;
+  ngược lại tự dùng **file cục bộ** (tiện cho chạy local).
+- `1` / `0`: ép bật / tắt Firestore.
+
+`deploy.sh` (mặc định `USE_FIRESTORE=1`) sẽ tự **bật Firestore API**, **tạo
+database** và **cấp quyền** cho service account của Cloud Run. Nếu muốn dùng file
+thay vì Firestore: `USE_FIRESTORE=0 ./deploy.sh`.
+
 ## 🔌 API
 
 | Method | Endpoint | Mô tả |
@@ -167,6 +200,8 @@ Khi khách bấm **"Đăng ký tư vấn"** và gửi form, lead được lưu t
 | `POST` | `/api/lead` | Đăng ký tư vấn. Body `{"name","phone","email","note","context"}` |
 | `GET` | `/api/suggestions` | Danh sách câu hỏi gợi ý |
 | `GET` | `/healthz` | Health check |
+| `GET` | `/admin` | Trang quản trị (cần `SBI_ADMIN_TOKEN`) |
+| `*` | `/api/admin/*` | API quản trị lead & Q&A (header `X-Admin-Token`) |
 
 ---
 

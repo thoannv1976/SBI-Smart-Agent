@@ -7,11 +7,13 @@ prompt để tận dụng prompt caching (giảm chi phí & độ trễ cho các
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass
-from functools import lru_cache
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .config import get_settings
+from .store import get_store
 
 # Nhãn hiển thị thân thiện cho từng nhóm chủ đề (category) trong dataset.
 CATEGORY_LABELS: dict[str, str] = {
@@ -48,8 +50,8 @@ def _default_system_prompt() -> str:
     )
 
 
-def load_qa_items(data_dir: Path | None = None) -> list[QAItem]:
-    """Đọc file sbi_qa_dataset.jsonl thành danh sách QAItem."""
+def load_base_qa_items(data_dir: Path | None = None) -> list[QAItem]:
+    """Đọc bộ Q&A gốc từ file sbi_qa_dataset.jsonl."""
     data_dir = data_dir or get_settings().data_dir
     path = data_dir / "sbi_qa_dataset.jsonl"
     items: list[QAItem] = []
@@ -70,6 +72,30 @@ def load_qa_items(data_dir: Path | None = None) -> list[QAItem]:
     if not items:
         raise RuntimeError(f"Không nạp được Q&A nào từ {path}")
     return items
+
+
+def load_qa_items(data_dir: Path | None = None) -> list[QAItem]:
+    """Q&A hiệu lực = bộ gốc + các chỉnh sửa/bổ sung/xoá từ store (admin)."""
+    base = load_base_qa_items(data_dir)
+    by_id: dict[str, QAItem] = {it.id: it for it in base}
+    order: list[str] = [it.id for it in base]
+
+    for ov in get_store().list_qa_overrides():
+        oid = (ov.get("id") or "").strip()
+        if not oid:
+            continue
+        if ov.get("deleted"):
+            by_id.pop(oid, None)
+            continue
+        if oid not in by_id:
+            order.append(oid)
+        by_id[oid] = QAItem(
+            id=oid,
+            category=(ov.get("category") or "khac").strip(),
+            question=(ov.get("question") or "").strip(),
+            answer=(ov.get("answer") or "").strip(),
+        )
+    return [by_id[i] for i in order if i in by_id]
 
 
 def load_base_system_prompt(data_dir: Path | None = None) -> str:
@@ -131,10 +157,77 @@ QUY TẮC TRẢ LỜI:
    chương trình SBI."""
 
 
-@lru_cache
+_SYSTEM_PROMPT_CACHE: str | None = None
+
+
 def get_cached_system_prompt() -> str:
-    """System prompt được cache trong vòng đời tiến trình (build 1 lần)."""
-    return build_system_prompt()
+    """System prompt được cache trong tiến trình; rebuild khi admin sửa Q&A."""
+    global _SYSTEM_PROMPT_CACHE
+    if _SYSTEM_PROMPT_CACHE is None:
+        _SYSTEM_PROMPT_CACHE = build_system_prompt()
+    return _SYSTEM_PROMPT_CACHE
+
+
+def reload_knowledge() -> None:
+    """Dựng lại system prompt sau khi kho tri thức thay đổi (admin)."""
+    global _SYSTEM_PROMPT_CACHE
+    _SYSTEM_PROMPT_CACHE = build_system_prompt()
+
+
+# --------------------------- Quản trị Q&A (admin) ---------------------------
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def list_qa_admin() -> list[dict]:
+    """Danh sách Q&A hiệu lực kèm nguồn gốc: base / edited / custom."""
+    base_ids = {it.id for it in load_base_qa_items()}
+    overrides = {
+        ov["id"]: ov
+        for ov in get_store().list_qa_overrides()
+        if ov.get("id") and not ov.get("deleted")
+    }
+    result: list[dict] = []
+    for it in load_qa_items():
+        if it.id in overrides:
+            source = "edited" if it.id in base_ids else "custom"
+        else:
+            source = "base"
+        result.append(
+            {
+                "id": it.id,
+                "category": it.category,
+                "category_label": CATEGORY_LABELS.get(it.category, it.category),
+                "question": it.question,
+                "answer": it.answer,
+                "source": source,
+            }
+        )
+    return result
+
+
+def upsert_qa(data: dict) -> dict:
+    """Thêm mới hoặc cập nhật một Q&A (ghi vào store + rebuild prompt)."""
+    qid = (data.get("id") or "").strip() or f"sbi-x{uuid.uuid4().hex[:6]}"
+    item = {
+        "id": qid,
+        "category": (data.get("category") or "khac").strip(),
+        "question": (data.get("question") or "").strip(),
+        "answer": (data.get("answer") or "").strip(),
+        "deleted": False,
+        "updated_at": _now_iso(),
+    }
+    get_store().upsert_qa(item)
+    reload_knowledge()
+    return item
+
+
+def delete_qa(qa_id: str) -> None:
+    """Xoá/ẩn một Q&A (ghi tombstone vào store + rebuild prompt)."""
+    get_store().delete_qa(qa_id.strip())
+    reload_knowledge()
 
 
 def get_suggested_questions(items: list[QAItem] | None = None, n: int = 6) -> list[str]:

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Quản trị · SBI Smart Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body class="admin-body">
+
+  <!-- Đăng nhập -->
+  <div id="login" class="admin-login">
+    <form id="loginForm" class="login-card">
+      <div class="login-logo">SBI</div>
+      <h1>Trang quản trị</h1>
+      <p class="muted">Nhập token quản trị (<code>SBI_ADMIN_TOKEN</code>) để tiếp tục.</p>
+      <input id="tokenInput" type="password" placeholder="Token quản trị" autocomplete="current-password" />
+      <button type="submit" class="primary-btn">Đăng nhập</button>
+      <p id="loginMsg" class="lead-msg err" hidden></p>
+    </form>
+  </div>
+
+  <!-- Ứng dụng -->
+  <div id="adminApp" class="admin-app" hidden>
+    <header class="admin-header">
+      <div class="admin-brand"><span class="logo">SBI</span> Quản trị</div>
+      <div class="admin-head-right">
+        <span id="storageBadge" class="badge"></span>
+        <a href="/" target="_blank" class="ghost-btn">Mở chatbot ↗</a>
+        <button id="logoutBtn" class="ghost-btn" type="button">Đăng xuất</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="qa" type="button">Kho tri thức (Q&amp;A)</button>
+      <button class="tab" data-tab="leads" type="button">Đăng ký tư vấn</button>
+    </nav>
+
+    <!-- Tab Q&A -->
+    <section id="tab-qa" class="tab-panel">
+      <div class="panel-toolbar">
+        <input id="qaSearch" type="search" placeholder="🔎 Tìm câu hỏi / câu trả lời…" />
+        <span id="qaCount" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="qaAddBtn" class="primary-btn" type="button">+ Thêm Q&amp;A</button>
+      </div>
+      <div id="qaList" class="qa-list"></div>
+    </section>
+
+    <!-- Tab Leads -->
+    <section id="tab-leads" class="tab-panel" hidden>
+      <div class="panel-toolbar">
+        <span id="leadsCount" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="leadsRefresh" class="ghost-btn" type="button">↻ Tải lại</button>
+        <button id="leadsCsv" class="ghost-btn" type="button">⤓ Xuất CSV</button>
+      </div>
+      <div id="leadsTableWrap" class="table-wrap"></div>
+    </section>
+  </div>
+
+  <!-- Modal soạn Q&A -->
+  <div id="qaModal" class="modal-overlay" hidden>
+    <div class="modal">
+      <button class="modal-close" id="qaClose" type="button" aria-label="Đóng">&times;</button>
+      <h3 id="qaModalTitle">Thêm Q&amp;A</h3>
+      <form id="qaForm" class="lead-form" novalidate>
+        <input type="hidden" name="id" />
+        <label>Nhóm chủ đề
+          <select name="category" id="qaCategory"></select>
+        </label>
+        <label>Câu hỏi <span class="req">*</span>
+          <textarea name="question" rows="2" required placeholder="Ví dụ: Học phí chương trình là bao nhiêu?"></textarea>
+        </label>
+        <label>Câu trả lời <span class="req">*</span>
+          <textarea name="answer" rows="6" required placeholder="Nội dung trả lời…"></textarea>
+        </label>
+        <button type="submit" class="lead-submit" id="qaSave">Lưu</button>
+        <p id="qaMsg" class="lead-msg" role="status" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

@@ -4,20 +4,28 @@ Phục vụ giao diện chat tĩnh và API hội thoại (streaming) nối với
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .config import get_settings
-from .knowledge import get_suggested_questions
+from .knowledge import (
+    CATEGORY_LABELS,
+    delete_qa,
+    get_suggested_questions,
+    list_qa_admin,
+    upsert_qa,
+)
 from .leads import save_lead
 from .llm import stream_reply
+from .store import get_store
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("sbi")
@@ -62,6 +70,27 @@ class LeadRequest(BaseModel):
     context: list[Message] = Field(
         default_factory=list, description="Vài tin nhắn gần nhất (tuỳ chọn)"
     )
+
+
+class QARequest(BaseModel):
+    id: str = Field("", description="Để trống nếu thêm mới")
+    category: str = Field("khac", description="Mã nhóm chủ đề")
+    question: str = Field(..., description="Câu hỏi")
+    answer: str = Field(..., description="Câu trả lời")
+
+
+# ----------------------------- Admin auth -----------------------------
+
+
+def require_admin(x_admin_token: str = Header(default="")) -> None:
+    """Bảo vệ các API /api/admin/* bằng token trong SBI_ADMIN_TOKEN."""
+    if not settings.admin_token:
+        raise HTTPException(
+            status_code=503,
+            detail="Trang quản trị chưa được bật. Hãy đặt biến SBI_ADMIN_TOKEN.",
+        )
+    if x_admin_token != settings.admin_token:
+        raise HTTPException(status_code=401, detail="Token quản trị không hợp lệ.")
 
 
 # ------------------------------- Routes -------------------------------
@@ -127,6 +156,47 @@ async def create_lead(req: LeadRequest) -> dict:
         "id": lead["id"],
         "message": "Cảm ơn bạn! Đội ngũ tư vấn tuyển sinh SBI sẽ liên hệ lại trong thời gian sớm nhất.",
     }
+
+
+# ------------------------------- Admin API -------------------------------
+
+
+@app.get("/api/admin/check", dependencies=[Depends(require_admin)])
+def admin_check() -> dict:
+    """Xác thực token + trả về thông tin nền tảng lưu trữ."""
+    return {"ok": True, "storage": get_store().backend}
+
+
+@app.get("/api/admin/leads", dependencies=[Depends(require_admin)])
+async def admin_list_leads() -> dict:
+    leads = await asyncio.to_thread(get_store().list_leads)
+    return {"count": len(leads), "leads": leads}
+
+
+@app.get("/api/admin/qa", dependencies=[Depends(require_admin)])
+async def admin_list_qa() -> dict:
+    items = await asyncio.to_thread(list_qa_admin)
+    return {"count": len(items), "items": items, "categories": CATEGORY_LABELS}
+
+
+@app.post("/api/admin/qa", dependencies=[Depends(require_admin)])
+async def admin_upsert_qa(req: QARequest) -> dict:
+    if not req.question.strip() or not req.answer.strip():
+        raise HTTPException(status_code=422, detail="Cần nhập cả câu hỏi và câu trả lời.")
+    item = await asyncio.to_thread(upsert_qa, req.model_dump())
+    return {"ok": True, "item": item}
+
+
+@app.delete("/api/admin/qa/{qa_id}", dependencies=[Depends(require_admin)])
+async def admin_delete_qa(qa_id: str) -> dict:
+    await asyncio.to_thread(delete_qa, qa_id)
+    return {"ok": True}
+
+
+# Trang quản trị
+@app.get("/admin")
+def admin_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "admin.html")
 
 
 # Trang chủ

@@ -7,10 +7,12 @@
 #   ./deploy.sh
 #
 # Có thể tuỳ chỉnh qua biến môi trường:
-#   PROJECT_ID (mặc định: sbi-smart-agent)
-#   REGION     (mặc định: asia-southeast1 - Singapore)
-#   SERVICE    (mặc định: sbi-smart-agent)
-#   SBI_MODEL  (mặc định: claude-sonnet-4-6)
+#   PROJECT_ID      (mặc định: sbi-smart-agent)
+#   REGION          (mặc định: asia-southeast1 - Singapore)
+#   SERVICE         (mặc định: sbi-smart-agent)
+#   SBI_MODEL       (mặc định: claude-sonnet-4-6)
+#   SBI_ADMIN_TOKEN (tuỳ chọn: bật trang /admin)
+#   USE_FIRESTORE   (mặc định: 1 - tạo & dùng Firestore cho lead/Q&A bền vững)
 #
 set -euo pipefail
 
@@ -18,6 +20,7 @@ PROJECT_ID="${PROJECT_ID:-sbi-smart-agent}"
 REGION="${REGION:-asia-southeast1}"
 SERVICE="${SERVICE:-sbi-smart-agent}"
 MODEL="${SBI_MODEL:-claude-sonnet-4-6}"
+USE_FIRESTORE="${USE_FIRESTORE:-1}"
 SECRET_NAME="anthropic-api-key"
 
 echo "▶ Project : $PROJECT_ID"
@@ -35,7 +38,8 @@ gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   secretmanager.googleapis.com \
-  artifactregistry.googleapis.com
+  artifactregistry.googleapis.com \
+  firestore.googleapis.com
 
 # 3) Lưu API key vào Secret Manager (nếu cung cấp qua biến môi trường)
 if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
@@ -64,6 +68,28 @@ else
   SECRET_FLAG=()
 fi
 
+# 4b) Firestore (lưu lead & Q&A bền vững giữa các lần deploy / nhiều instance)
+ENV_VARS="SBI_MODEL=${MODEL}"
+if [[ "$USE_FIRESTORE" == "1" ]]; then
+  echo "▶ Thiết lập Firestore…"
+  gcloud firestore databases create --location="$REGION" --type=firestore-native 2>/dev/null \
+    || echo "  (Firestore database đã tồn tại — bỏ qua)"
+  PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+  RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${RUNTIME_SA}" \
+    --role="roles/datastore.user" >/dev/null 2>&1 || true
+  ENV_VARS="${ENV_VARS}##SBI_USE_FIRESTORE=auto##SBI_FIRESTORE_PROJECT=${PROJECT_ID}"
+fi
+
+# Token quản trị (bật trang /admin) nếu được cung cấp
+if [[ -n "${SBI_ADMIN_TOKEN:-}" ]]; then
+  ENV_VARS="${ENV_VARS}##SBI_ADMIN_TOKEN=${SBI_ADMIN_TOKEN}"
+  echo "▶ Trang /admin sẽ được bật."
+else
+  echo "⚠ Chưa set SBI_ADMIN_TOKEN — trang /admin sẽ bị tắt."
+fi
+
 # 5) Build & deploy (Cloud Build sẽ build từ Dockerfile)
 echo "▶ Build & deploy lên Cloud Run…"
 gcloud run deploy "$SERVICE" \
@@ -77,7 +103,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 5 \
   --timeout 120 \
-  --set-env-vars "SBI_MODEL=${MODEL}" \
+  --set-env-vars "^##^${ENV_VARS}" \
   "${SECRET_FLAG[@]}"
 
 echo

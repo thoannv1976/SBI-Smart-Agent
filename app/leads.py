@@ -9,6 +9,7 @@ Chiến lược lưu trữ (ưu tiên tin cậy trên Cloud Run, nơi filesystem
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -16,6 +17,7 @@ import uuid
 from datetime import datetime, timezone
 
 from .config import Settings, get_settings
+from .store import get_store
 
 logger = logging.getLogger("sbi.leads")
 
@@ -58,13 +60,11 @@ async def save_lead(data: dict, settings: Settings | None = None) -> dict:
     except Exception:  # pragma: no cover - logging không được làm hỏng request
         logger.exception("Không in được structured log cho lead")
 
-    # 2) File cục bộ (best-effort, chủ yếu cho local dev)
+    # 2) Lưu bền vững qua store (Firestore nếu bật, ngược lại file cục bộ)
     try:
-        settings.leads_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(settings.leads_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(lead, ensure_ascii=False) + "\n")
+        await asyncio.to_thread(get_store().add_lead, lead)
     except Exception as exc:
-        logger.warning("Không ghi được lead ra file %s: %s", settings.leads_file, exc)
+        logger.warning("Không lưu được lead vào store: %s", exc)
 
     # 3) Webhook Google Sheet (tuỳ chọn)
     if settings.leads_webhook_url:

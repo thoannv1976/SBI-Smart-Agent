@@ -5,9 +5,10 @@ Phục vụ giao diện chat tĩnh và API hội thoại (streaming) nối với
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from .config import get_settings
 from .knowledge import get_suggested_questions
+from .leads import save_lead
 from .llm import stream_reply
 
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +51,17 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message] = Field(..., description="Toàn bộ lịch sử hội thoại")
+
+
+class LeadRequest(BaseModel):
+    name: str = Field(..., description="Họ và tên")
+    phone: str = Field(..., description="Số điện thoại")
+    email: str = Field("", description="Email (tuỳ chọn)")
+    note: str = Field("", description="Nội dung quan tâm (tuỳ chọn)")
+    source: str = Field("web", description="Nguồn lead")
+    context: list[Message] = Field(
+        default_factory=list, description="Vài tin nhắn gần nhất (tuỳ chọn)"
+    )
 
 
 # ------------------------------- Routes -------------------------------
@@ -92,6 +105,28 @@ async def chat(req: ChatRequest) -> StreamingResponse:
         media_type="text/plain; charset=utf-8",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/api/lead")
+async def create_lead(req: LeadRequest) -> dict:
+    """Nhận thông tin đăng ký tư vấn, kiểm tra hợp lệ rồi lưu lại."""
+    name = req.name.strip()
+    phone = req.phone.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Vui lòng nhập họ và tên.")
+    digits = re.sub(r"\D", "", phone)
+    if len(digits) < 8 or len(digits) > 15:
+        raise HTTPException(status_code=422, detail="Số điện thoại không hợp lệ.")
+
+    payload = req.model_dump()
+    payload["context"] = [m.model_dump() for m in req.context]
+    lead = await save_lead(payload, settings)
+    logger.info("Đã nhận lead %s (%s)", lead["id"], name)
+    return {
+        "ok": True,
+        "id": lead["id"],
+        "message": "Cảm ơn bạn! Đội ngũ tư vấn tuyển sinh SBI sẽ liên hệ lại trong thời gian sớm nhất.",
+    }
 
 
 # Trang chủ

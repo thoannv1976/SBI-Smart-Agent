@@ -5,9 +5,13 @@ buộc hệ thống chạy demo mode (truy hồi câu trả lời từ dataset).
 """
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 os.environ.pop("ANTHROPIC_API_KEY", None)  # ép demo mode
+os.environ.pop("SBI_LEADS_WEBHOOK_URL", None)  # không gọi webhook khi test
+# Ghi lead vào file tạm để không tạo rác trong repo
+os.environ["SBI_LEADS_FILE"] = str(Path(tempfile.gettempdir()) / "sbi_test_leads.jsonl")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -92,3 +96,33 @@ def test_chat_out_of_scope_guides_to_contact():
     )
     assert r.status_code == 200
     assert len(r.text.strip()) > 0
+
+
+# ----------------------------- Lead capture -----------------------------
+
+
+def test_lead_valid():
+    r = client.post(
+        "/api/lead",
+        json={
+            "name": "Nguyễn Văn A",
+            "phone": "0901234567",
+            "email": "a@example.com",
+            "note": "Quan tâm học phí",
+            "context": [{"role": "user", "content": "Học phí bao nhiêu?"}],
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["id"].startswith("lead-")
+
+
+def test_lead_missing_name():
+    r = client.post("/api/lead", json={"name": "", "phone": "0901234567"})
+    assert r.status_code == 422
+
+
+def test_lead_invalid_phone():
+    r = client.post("/api/lead", json={"name": "Trần B", "phone": "123"})
+    assert r.status_code == 422

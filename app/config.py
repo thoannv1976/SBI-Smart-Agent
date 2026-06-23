@@ -40,6 +40,16 @@ class Settings:
     # --- Dữ liệu ---
     data_dir: Path = Path(os.getenv("SBI_DATA_DIR", str(BASE_DIR / "data")))
 
+    # --- Lead capture (đăng ký tư vấn) ---
+    # (Tuỳ chọn) URL Google Apps Script Web App để ghi lead vào Google Sheet.
+    leads_webhook_url: str = os.getenv("SBI_LEADS_WEBHOOK_URL", "")
+    # File lưu lead cục bộ — chủ yếu phục vụ local dev. Trên Cloud Run filesystem
+    # là tạm thời (mất khi instance tái tạo) nên nguồn lead tin cậy là Cloud
+    # Logging (structured log) hoặc Google Sheet qua webhook ở trên.
+    leads_file: Path = Path(
+        os.getenv("SBI_LEADS_FILE", str(BASE_DIR / "data" / "leads.jsonl"))
+    )
+
     # --- Server ---
     # Cloud Run cấp PORT qua biến môi trường (mặc định 8080).
     port: int = int(os.getenv("PORT", "8080"))

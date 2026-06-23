@@ -10,9 +10,18 @@
   const sendBtn = document.getElementById("sendBtn");
   const resetBtn = document.getElementById("resetBtn");
 
+  // Modal đăng ký tư vấn
+  const leadBtn = document.getElementById("leadBtn");
+  const leadModal = document.getElementById("leadModal");
+  const leadClose = document.getElementById("leadClose");
+  const leadForm = document.getElementById("leadForm");
+  const leadSubmit = document.getElementById("leadSubmit");
+  const leadMsg = document.getElementById("leadMsg");
+
   /** Lịch sử hội thoại gửi lên server: [{role, content}, ...] */
   let history = [];
   let busy = false;
+  let ctaShown = false;
 
   // ----------------------- Tiện ích render an toàn -----------------------
 
@@ -114,6 +123,7 @@
       if (answer.trim()) {
         botBubble.innerHTML = formatMessage(answer);
         history.push({ role: "assistant", content: answer });
+        maybeShowCTA();
       } else {
         botBubble.innerHTML = formatMessage("Xin lỗi, mình chưa nhận được phản hồi. Bạn thử lại nhé!");
       }
@@ -157,9 +167,111 @@
   resetBtn.addEventListener("click", () => {
     if (busy) return;
     history = [];
+    ctaShown = false;
     chatEl.innerHTML = "";
     chatEl.appendChild(welcomeEl);
     inputEl.focus();
+  });
+
+  // ----------------------- Đăng ký tư vấn (lead) -----------------------
+
+  function lastUserText() {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].role === "user") return history[i].content;
+    }
+    return "";
+  }
+
+  function openLeadModal() {
+    leadMsg.hidden = true;
+    leadMsg.className = "lead-msg";
+    // Gợi ý điền sẵn "nội dung quan tâm" bằng câu hỏi gần nhất
+    const noteEl = leadForm.elements.note;
+    if (noteEl && !noteEl.value) noteEl.value = lastUserText();
+    leadModal.hidden = false;
+    const nameEl = leadForm.elements.name;
+    if (nameEl) nameEl.focus();
+  }
+
+  function closeLeadModal() {
+    leadModal.hidden = true;
+  }
+
+  function maybeShowCTA() {
+    if (ctaShown) return;
+    ctaShown = true;
+    const wrap = document.createElement("div");
+    wrap.className = "msg bot";
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = "🎓";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML =
+      '<p>Bạn muốn được tư vấn trực tiếp về chương trình SBI?</p>';
+    const cta = document.createElement("button");
+    cta.type = "button";
+    cta.className = "chip";
+    cta.style.marginTop = "8px";
+    cta.textContent = "📞 Đăng ký tư vấn";
+    cta.addEventListener("click", openLeadModal);
+    bubble.appendChild(cta);
+    wrap.append(avatar, bubble);
+    chatEl.appendChild(wrap);
+    scrollToBottom();
+  }
+
+  leadBtn.addEventListener("click", openLeadModal);
+  leadClose.addEventListener("click", closeLeadModal);
+  leadModal.addEventListener("click", (e) => {
+    if (e.target === leadModal) closeLeadModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !leadModal.hidden) closeLeadModal();
+  });
+
+  leadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = leadForm.elements.name.value.trim();
+    const phone = leadForm.elements.phone.value.trim();
+    const email = leadForm.elements.email.value.trim();
+    const note = leadForm.elements.note.value.trim();
+
+    leadMsg.hidden = false;
+    leadMsg.className = "lead-msg";
+    if (!name) { leadMsg.textContent = "Vui lòng nhập họ và tên."; leadMsg.classList.add("err"); return; }
+    if (phone.replace(/\D/g, "").length < 8) {
+      leadMsg.textContent = "Số điện thoại không hợp lệ."; leadMsg.classList.add("err"); return;
+    }
+
+    leadSubmit.disabled = true;
+    leadSubmit.textContent = "Đang gửi…";
+    leadMsg.hidden = true;
+    try {
+      const resp = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, phone, email, note,
+          source: "web",
+          context: history.slice(-6),
+        }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.detail || "Gửi không thành công");
+      leadMsg.hidden = false;
+      leadMsg.className = "lead-msg ok";
+      leadMsg.textContent = data.message || "Cảm ơn bạn! Chúng tôi sẽ liên hệ lại sớm.";
+      leadForm.reset();
+      setTimeout(closeLeadModal, 2200);
+    } catch (err) {
+      leadMsg.hidden = false;
+      leadMsg.className = "lead-msg err";
+      leadMsg.textContent = "⚠️ " + (err.message || "Có lỗi xảy ra, vui lòng thử lại.");
+    } finally {
+      leadSubmit.disabled = false;
+      leadSubmit.textContent = "Gửi đăng ký";
+    }
   });
 
   // ----------------------- Câu hỏi gợi ý -----------------------

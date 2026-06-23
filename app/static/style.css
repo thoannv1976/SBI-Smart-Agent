@@ -191,3 +191,76 @@ html, body {
 .chat::-webkit-scrollbar { width: 8px; }
 .chat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
 .chat::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ---------------- Header actions + nút Đăng ký tư vấn ---------------- */
+.header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.lead-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 14px;
+  color: #fff; font-size: 13.5px; font-weight: 600; font-family: inherit;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 10px; cursor: pointer; white-space: nowrap;
+  transition: background .2s, transform .15s;
+}
+.lead-btn:hover { background: rgba(255, 255, 255, .3); transform: translateY(-1px); }
+
+/* ---------------- Modal ---------------- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 41, .55); backdrop-filter: blur(3px);
+  animation: fade .2s ease;
+}
+.modal-overlay[hidden] { display: none; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  position: relative;
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 24px 22px 22px;
+  box-shadow: 0 24px 70px rgba(15, 23, 41, .35);
+  animation: rise .25s ease;
+}
+.modal-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 32px; height: 32px;
+  border: none; background: transparent;
+  font-size: 26px; line-height: 1; color: var(--ink-soft);
+  cursor: pointer; border-radius: 8px;
+}
+.modal-close:hover { background: var(--surface-2); color: var(--ink); }
+.modal h3 { font-size: 19px; margin-bottom: 4px; }
+.modal-sub { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px; }
+.lead-form { display: flex; flex-direction: column; gap: 12px; }
+.lead-form label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.lead-form .req { color: #dc2626; }
+.lead-form input, .lead-form textarea {
+  font-family: inherit; font-size: 14.5px; color: var(--ink);
+  padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface-2); outline: none; resize: vertical;
+  transition: border-color .2s, box-shadow .2s;
+}
+.lead-form input:focus, .lead-form textarea:focus {
+  border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29, 78, 216, .12); background: #fff;
+}
+.lead-submit {
+  margin-top: 4px; height: 44px;
+  border: none; border-radius: 12px;
+  background: var(--brand-grad); color: #fff;
+  font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: transform .15s, opacity .2s;
+}
+.lead-submit:hover { transform: translateY(-1px); }
+.lead-submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.lead-msg { font-size: 13.5px; text-align: center; margin-top: 2px; }
+.lead-msg.ok { color: #047857; }
+.lead-msg.err { color: #dc2626; }
+
+@media (max-width: 640px) {
+  .lead-btn-label { display: none; }
+  .lead-btn { padding: 0 11px; }
+}

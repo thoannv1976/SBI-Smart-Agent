@@ -17,6 +17,7 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 - 🧠 **Bám sát tri thức**: trả lời dựa trên 50 Q&A; câu ngoài phạm vi → hướng dẫn liên hệ Khoa QTKD – FTU.
 - ⚡ **Prompt caching** của Claude: nạp toàn bộ tri thức vào ngữ cảnh nhưng vẫn rẻ & nhanh.
 - ✨ **Gợi ý câu hỏi** theo nhóm chủ đề, giữ ngữ cảnh hội thoại nhiều lượt.
+- 📞 **Đăng ký tư vấn (lead capture)**: thu thập thông tin khách quan tâm, lưu vào Cloud Logging và (tuỳ chọn) Google Sheet.
 - 🧪 **Demo mode**: chạy được ngay cả khi chưa có API key (truy hồi câu trả lời từ dataset).
 
 ## 🏗️ Kiến trúc
@@ -115,6 +116,7 @@ qua **Cloud Build** → deploy lên **Cloud Run** và in ra URL dịch vụ.
 | `SBI_MAX_TOKENS` | `1024` | Độ dài tối đa câu trả lời. |
 | `SBI_TEMPERATURE` | `0.2` | Độ "sáng tạo" (thấp = bám dữ liệu). |
 | `SBI_MAX_HISTORY_TURNS` | `12` | Số lượt hội thoại giữ làm ngữ cảnh. |
+| `SBI_LEADS_WEBHOOK_URL` | *(trống)* | (Tuỳ chọn) URL Google Apps Script để ghi lead vào Google Sheet. |
 | `PORT` | `8080` | Cổng server (Cloud Run tự cấp). |
 
 ## 🔁 Cập nhật dữ liệu Q&A
@@ -125,12 +127,44 @@ Sửa nội dung trong `data/build_dataset.py` rồi chạy lại để sinh l�
 cd data && python build_dataset.py
 ```
 
+## 📞 Lead capture (Đăng ký tư vấn)
+
+Khi khách bấm **"Đăng ký tư vấn"** và gửi form, lead được lưu theo 3 lớp:
+
+1. **Cloud Logging** (luôn bật): in một dòng JSON `{"event":"lead", ...}` ra stdout.
+   Trên Cloud Run, lọc lead bằng truy vấn: `jsonPayload.event="lead"`.
+2. **Google Sheet** (tuỳ chọn): đặt biến `SBI_LEADS_WEBHOOK_URL` trỏ tới một
+   Google Apps Script Web App để tự ghi vào Sheet (xem dưới).
+3. **File cục bộ** `data/leads.jsonl` (chỉ cho local dev; Cloud Run sẽ mất khi
+   instance tái tạo — đừng phụ thuộc vào lớp này trên production).
+
+### Nối Google Sheet trong 4 bước
+
+1. Tạo Google Sheet mới, vào **Extensions → Apps Script**, dán đoạn sau:
+
+   ```javascript
+   function doPost(e) {
+     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+     const d = JSON.parse(e.postData.contents);
+     sheet.appendRow([d.created_at, d.name, d.phone, d.email, d.note, d.source]);
+     return ContentService.createTextOutput("ok");
+   }
+   ```
+
+2. **Deploy → New deployment → Web app**, chọn *Execute as: Me*,
+   *Who has access: Anyone*. Copy URL Web App.
+3. Đặt biến môi trường khi deploy:
+   `gcloud run services update sbi-smart-agent --region asia-southeast1 --set-env-vars "SBI_LEADS_WEBHOOK_URL=<URL>"`
+   (hoặc thêm vào `deploy.sh`).
+4. Xong — mỗi lead mới sẽ tự xuất hiện thành một dòng trong Google Sheet.
+
 ## 🔌 API
 
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | `GET` | `/` | Giao diện chat |
 | `POST` | `/api/chat` | Body `{"messages":[{"role","content"}]}` → trả lời streaming (text/plain) |
+| `POST` | `/api/lead` | Đăng ký tư vấn. Body `{"name","phone","email","note","context"}` |
 | `GET` | `/api/suggestions` | Danh sách câu hỏi gợi ý |
 | `GET` | `/healthz` | Health check |
 

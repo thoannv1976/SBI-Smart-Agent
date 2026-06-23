@@ -19,9 +19,15 @@
           <p>Trợ lý tư vấn tuyển sinh · Trường Đại học Ngoại thương (FTU)</p>
         </div>
       </div>
-      <button id="resetBtn" class="reset-btn" title="Bắt đầu hội thoại mới" aria-label="Hội thoại mới">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-      </button>
+      <div class="header-actions">
+        <button id="leadBtn" class="lead-btn" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <span class="lead-btn-label">Đăng ký tư vấn</span>
+        </button>
+        <button id="resetBtn" class="reset-btn" title="Bắt đầu hội thoại mới" aria-label="Hội thoại mới">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+      </div>
     </header>
 
     <!-- Khung chat -->
@@ -52,6 +58,31 @@
         Thông tin mang tính tham khảo. Vui lòng liên hệ Khoa Quản trị Kinh doanh - FTU để được tư vấn chính thức.
       </p>
     </footer>
+  </div>
+
+  <!-- Modal đăng ký tư vấn -->
+  <div id="leadModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leadTitle">
+      <button class="modal-close" id="leadClose" type="button" aria-label="Đóng">&times;</button>
+      <h3 id="leadTitle">📞 Đăng ký tư vấn</h3>
+      <p class="modal-sub">Để lại thông tin, đội ngũ tư vấn tuyển sinh chương trình SBI sẽ liên hệ lại với bạn sớm nhất.</p>
+      <form id="leadForm" class="lead-form" novalidate>
+        <label>Họ và tên <span class="req">*</span>
+          <input name="name" type="text" required placeholder="Nguyễn Văn A" />
+        </label>
+        <label>Số điện thoại <span class="req">*</span>
+          <input name="phone" type="tel" required placeholder="09xx xxx xxx" />
+        </label>
+        <label>Email
+          <input name="email" type="email" placeholder="email@example.com" />
+        </label>
+        <label>Nội dung quan tâm
+          <textarea name="note" rows="2" placeholder="Ví dụ: học phí, học bổng, phương thức xét tuyển…"></textarea>
+        </label>
+        <button type="submit" class="lead-submit" id="leadSubmit">Gửi đăng ký</button>
+        <p id="leadMsg" class="lead-msg" role="status" hidden></p>
+      </form>
+    </div>
   </div>
 
   <script src="/static/app.js"></script>

@@ -43,6 +43,34 @@ QA = [
      "Chỉ tiêu tuyển sinh của chương trình là bao nhiêu?",
      "Chương trình dự kiến tuyển sinh 50 sinh viên/khóa, nằm trong tổng chỉ tiêu đào tạo hàng năm của Trường Đại học Ngoại thương và xét tuyển theo hệ thống tuyển sinh chung của trường."),
 
+    # ----------------------------------------------------------------------
+    # TUYỂN SINH & CHÍNH SÁCH (placeholder an toàn — CHƯA có số liệu thật).
+    # ⚠️ KHI CÓ DỮ LIỆU CHÍNH THỨC, hãy thay nội dung "answer" bên dưới bằng
+    #    số liệu thật (học phí, điểm chuẩn, học bổng, hạn nộp, hotline...) rồi
+    #    chạy lại: python build_dataset.py
+    # ----------------------------------------------------------------------
+    ("tuyen_sinh",
+     "Học phí của chương trình SBI là bao nhiêu?",
+     "Mức học phí của chương trình SBI được Trường Đại học Ngoại thương công bố chính thức theo từng năm học và có thể điều chỉnh theo lộ trình. Để biết mức học phí cập nhật, chính xác áp dụng cho khóa tuyển sinh của bạn, vui lòng tham khảo thông báo tuyển sinh chính thức của Nhà trường hoặc liên hệ trực tiếp Khoa Quản trị Kinh doanh - Trường Đại học Ngoại thương. Bạn cũng có thể để lại thông tin liên hệ để được đội ngũ tư vấn hỗ trợ chi tiết."),
+    ("tuyen_sinh",
+     "Chương trình SBI xét tuyển theo những phương thức nào?",
+     "Chương trình SBI (ngành Thương mại điện tử, mã 7340122) tuyển sinh theo hệ thống tuyển sinh chung của Trường Đại học Ngoại thương. Các phương thức xét tuyển, tổ hợp môn và điều kiện cụ thể được công bố trong Đề án/Thông báo tuyển sinh chính thức hằng năm của Nhà trường. Để được tư vấn phương thức phù hợp nhất với bạn, vui lòng liên hệ Khoa Quản trị Kinh doanh - Trường Đại học Ngoại thương hoặc để lại thông tin để được hỗ trợ."),
+    ("tuyen_sinh",
+     "Điểm chuẩn của chương trình SBI là bao nhiêu?",
+     "Điểm chuẩn (điểm trúng tuyển) của chương trình được xác định sau mỗi đợt xét tuyển và thay đổi theo từng năm, tùy số lượng và kết quả của thí sinh đăng ký. Để tham khảo điểm chuẩn các năm gần nhất và thông tin cập nhật, vui lòng theo dõi thông báo tuyển sinh chính thức của Trường Đại học Ngoại thương hoặc liên hệ Khoa Quản trị Kinh doanh để được tư vấn."),
+    ("tuyen_sinh",
+     "Chương trình SBI có chính sách học bổng không?",
+     "Sinh viên được hưởng các chính sách học bổng theo quy định của Trường Đại học Ngoại thương (ví dụ học bổng khuyến khích học tập dành cho sinh viên có thành tích tốt) cùng các học bổng từ doanh nghiệp, đối tác (nếu có). Điều kiện, giá trị và thời điểm xét học bổng được cập nhật theo từng năm. Để biết chi tiết áp dụng cho chương trình SBI, vui lòng liên hệ Khoa Quản trị Kinh doanh - Trường Đại học Ngoại thương hoặc để lại thông tin để được tư vấn."),
+    ("tuyen_sinh",
+     "Hồ sơ và thời hạn đăng ký xét tuyển chương trình SBI như thế nào?",
+     "Hồ sơ đăng ký, quy trình và các mốc thời gian (thời hạn nộp hồ sơ, công bố kết quả, nhập học...) được thực hiện theo kế hoạch tuyển sinh chung của Trường Đại học Ngoại thương và Bộ Giáo dục & Đào tạo, cập nhật theo từng năm. Để có hướng dẫn hồ sơ và lịch trình chính xác cho đợt tuyển sinh hiện tại, vui lòng tham khảo thông báo tuyển sinh chính thức của Nhà trường hoặc liên hệ Khoa Quản trị Kinh doanh để được hỗ trợ."),
+    ("tuyen_sinh",
+     "Sinh viên chương trình SBI có ký túc xá hoặc hỗ trợ chỗ ở không?",
+     "Thông tin về ký túc xá và các lựa chọn chỗ ở cho sinh viên được Trường Đại học Ngoại thương cập nhật theo từng năm học. Để biết điều kiện đăng ký và tình trạng chỗ ở hiện tại, bạn vui lòng liên hệ đơn vị phụ trách công tác sinh viên của Nhà trường hoặc Khoa Quản trị Kinh doanh để được hướng dẫn."),
+    ("tuyen_sinh",
+     "Làm thế nào để liên hệ tư vấn tuyển sinh chương trình SBI?",
+     "Để được tư vấn trực tiếp về chương trình Thương mại số thông minh & Đổi mới kinh doanh (SBI), bạn vui lòng liên hệ Khoa Quản trị Kinh doanh - Trường Đại học Ngoại thương (Trụ sở chính: số 91 Chùa Láng, Đống Đa, Hà Nội) hoặc theo dõi các kênh tuyển sinh chính thức của Nhà trường. Bạn cũng có thể để lại họ tên và số điện thoại/email ngay tại đây để đội ngũ tư vấn liên hệ lại và hỗ trợ bạn."),
+
     # ===== CHƯƠNG TRÌNH ĐÀO TẠO =====
     ("chuong_trinh_dao_tao",
      "Cấu trúc 131 tín chỉ của chương trình SBI được phân bổ như thế nào?",

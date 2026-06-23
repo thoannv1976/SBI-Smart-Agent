@@ -141,9 +141,9 @@ def get_suggested_questions(items: list[QAItem] | None = None, n: int = 6) -> li
     """Một vài câu hỏi gợi ý đại diện cho các nhóm chủ đề (hiện trên UI)."""
     return [
         "Chương trình SBI là gì và tốt nghiệp nhận bằng gì?",
+        "Học phí chương trình là bao nhiêu?",
+        "Chương trình xét tuyển theo những phương thức nào?",
         "Cơ hội việc làm sau khi ra trường như thế nào?",
         "Chương trình có những hướng chuyên sâu nào?",
-        "Sinh viên được học những công nghệ, phần mềm gì?",
-        "Chỉ tiêu tuyển sinh là bao nhiêu?",
-        "Sinh viên có được thực hành, thực tập thực tế không?",
+        "Làm sao để được tư vấn tuyển sinh trực tiếp?",
     ][:n]

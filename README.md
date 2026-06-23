@@ -5,7 +5,7 @@ Chatbot tư vấn tuyển sinh cho chương trình **Thương mại số thông 
 **Trường Đại học Ngoại thương (FTU)**.
 
 Trợ lý trả lời câu hỏi của học sinh/phụ huynh về chương trình học, môn học, hướng chuyên sâu,
-thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên bộ tri thức chính thức gồm 43 cặp hỏi-đáp.
+thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên bộ tri thức chính thức gồm 50 cặp hỏi-đáp.
 
 > Slogan chương trình: *Kết nối công nghệ – Khơi nguồn đổi mới – Kiến tạo giá trị bền vững.*
 
@@ -14,7 +14,7 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 ## ✨ Tính năng
 
 - 💬 Chat **streaming** thời gian thực, giao diện tiếng Việt, responsive (đẹp trên cả mobile).
-- 🧠 **Bám sát tri thức**: trả lời dựa trên 43 Q&A; câu ngoài phạm vi → hướng dẫn liên hệ Khoa QTKD – FTU.
+- 🧠 **Bám sát tri thức**: trả lời dựa trên 50 Q&A; câu ngoài phạm vi → hướng dẫn liên hệ Khoa QTKD – FTU.
 - ⚡ **Prompt caching** của Claude: nạp toàn bộ tri thức vào ngữ cảnh nhưng vẫn rẻ & nhanh.
 - ✨ **Gợi ý câu hỏi** theo nhóm chủ đề, giữ ngữ cảnh hội thoại nhiều lượt.
 - 🧪 **Demo mode**: chạy được ngay cả khi chưa có API key (truy hồi câu trả lời từ dataset).
@@ -23,7 +23,7 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 
 ```
 Trình duyệt ──► Frontend (HTML/CSS/JS) ──► FastAPI (/api/chat, streaming)
-                                              │  • Nạp 43 Q&A → system prompt (prompt caching)
+                                              │  • Nạp 50 Q&A → system prompt (prompt caching)
                                               ▼
                                           Claude API (Anthropic)
                                               │
@@ -49,7 +49,7 @@ SBI-Smart-Agent/
 │   ├── knowledge.py     # Nạp Q&A → system prompt
 │   └── static/          # index.html, style.css, app.js
 ├── data/
-│   ├── sbi_qa_dataset.jsonl   # 43 Q&A (knowledge base)
+│   ├── sbi_qa_dataset.jsonl   # 50 Q&A (knowledge base)
 │   ├── sbi_qa_chat.jsonl      # Định dạng chat (để fine-tune sau)
 │   ├── system_prompt.txt      # System prompt vai trò chatbot
 │   └── build_dataset.py       # Script tái tạo dataset

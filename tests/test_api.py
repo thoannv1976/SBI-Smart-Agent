@@ -27,7 +27,7 @@ client = TestClient(app)
 
 def test_load_qa_items():
     items = load_qa_items()
-    assert len(items) == 43, "Phải nạp đủ 43 cặp Q&A"
+    assert len(items) == 50, "Phải nạp đủ 50 cặp Q&A"
     assert all(it.question and it.answer for it in items)
     assert all(it.id.startswith("sbi-") for it in items)
 
@@ -37,6 +37,13 @@ def test_system_prompt_contains_knowledge():
     assert "SBI" in prompt
     assert "131 tín chỉ" in prompt  # một dữ kiện đặc trưng trong dataset
     assert "QUY TẮC TRẢ LỜI" in prompt
+
+
+def test_admissions_topics_present():
+    """Các chủ đề tuyển sinh hay được hỏi đã có trong kho tri thức."""
+    questions = " ".join(it.question.lower() for it in load_qa_items())
+    for kw in ["học phí", "phương thức", "điểm chuẩn", "học bổng", "hồ sơ", "liên hệ"]:
+        assert kw in questions, f"Thiếu Q&A về '{kw}'"
 
 
 def test_suggestions_not_empty():

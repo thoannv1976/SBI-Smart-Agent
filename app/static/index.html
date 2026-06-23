@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SBI Smart Agent · Tư vấn tuyển sinh FTU</title>
+  <meta name="description" content="Trợ lý ảo tư vấn chương trình Thương mại số thông minh & Đổi mới kinh doanh (SBI) - Trường Đại học Ngoại thương (FTU)." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo">SBI</div>
+        <div class="brand-text">
+          <h1>SBI Smart Agent</h1>
+          <p>Trợ lý tư vấn tuyển sinh · Trường Đại học Ngoại thương (FTU)</p>
+        </div>
+      </div>
+      <button id="resetBtn" class="reset-btn" title="Bắt đầu hội thoại mới" aria-label="Hội thoại mới">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+    </header>
+
+    <!-- Khung chat -->
+    <main id="chat" class="chat" aria-live="polite">
+      <!-- Màn hình chào -->
+      <section id="welcome" class="welcome">
+        <div class="welcome-icon">🎓</div>
+        <h2>Xin chào! Mình là trợ lý tư vấn chương trình <span class="accent">SBI</span></h2>
+        <p>
+          Chương trình <strong>Thương mại số thông minh &amp; Đổi mới kinh doanh</strong>
+          (Smart Digital Commerce and Business Innovation) — ngành Thương mại điện tử,
+          Trường Đại học Ngoại thương. Bạn muốn tìm hiểu điều gì ạ?
+        </p>
+        <div id="suggestions" class="suggestions"></div>
+      </section>
+    </main>
+
+    <!-- Ô nhập -->
+    <footer class="composer">
+      <form id="chatForm" class="composer-form">
+        <textarea id="input" class="composer-input" rows="1"
+          placeholder="Nhập câu hỏi về chương trình SBI…" autocomplete="off"></textarea>
+        <button id="sendBtn" type="submit" class="send-btn" aria-label="Gửi">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+        </button>
+      </form>
+      <p class="disclaimer">
+        Thông tin mang tính tham khảo. Vui lòng liên hệ Khoa Quản trị Kinh doanh - FTU để được tư vấn chính thức.
+      </p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

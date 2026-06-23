@@ -1,0 +1,22 @@
+# Secrets / môi trường
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Hệ điều hành / IDE
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Claude Code (cấu hình local cá nhân)
+.claude/

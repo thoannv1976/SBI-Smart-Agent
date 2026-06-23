@@ -1,0 +1,4 @@
+# Dependencies cho phát triển & test (không cần trong image production)
+-r requirements.txt
+pytest>=8.0
+httpx>=0.27

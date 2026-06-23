@@ -1,0 +1,70 @@
+# CI/CD cho SBI Smart Agent
+#
+# - Job "test": luôn chạy (push & pull request) — không cần secret.
+# - Job "deploy": tự động deploy lên Cloud Run khi push vào nhánh `main`,
+#   CHỈ chạy khi đã cấu hình đủ secrets/variables dưới đây trong repo Settings:
+#
+#   Variables (Settings → Secrets and variables → Actions → Variables):
+#     GCP_PROJECT_ID        ví dụ: sbi-smart-agent
+#     GCP_REGION            ví dụ: asia-southeast1
+#     CLOUD_RUN_SERVICE     ví dụ: sbi-smart-agent
+#   Secrets:
+#     GCP_WORKLOAD_IDP      Workload Identity Provider
+#                           (projects/<num>/locations/global/workloadIdentityPools/<pool>/providers/<provider>)
+#     GCP_SERVICE_ACCOUNT   email service account dùng để deploy
+#     ANTHROPIC_API_KEY     API key Claude
+#
+# Tham khảo cấu hình Workload Identity Federation:
+#   https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation
+
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cài dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Chạy test
+        run: pytest -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write # cần cho Workload Identity Federation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xác thực Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDP }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Cài đặt gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy lên Cloud Run
+        run: |
+          gcloud run deploy "${{ vars.CLOUD_RUN_SERVICE }}" \
+            --source . \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --region "${{ vars.GCP_REGION }}" \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --set-env-vars "SBI_MODEL=claude-sonnet-4-6" \
+            --set-env-vars "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}"

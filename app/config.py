@@ -1,0 +1,56 @@
+"""Cấu hình ứng dụng - đọc toàn bộ từ biến môi trường (12-factor app).
+
+Khi chạy local: tạo file `.env` (xem `.env.example`) rồi `export` hoặc dùng
+`python-dotenv`. Khi chạy trên Cloud Run: nạp qua `--set-env-vars` / `--set-secrets`.
+"""
+from __future__ import annotations
+
+import os
+from functools import lru_cache
+from pathlib import Path
+
+# Nạp file .env nếu có (chỉ phục vụ chạy local; trên Cloud Run dùng env vars thật).
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:  # python-dotenv không bắt buộc ở môi trường production
+    pass
+
+
+# Thư mục gốc của dự án (…/SBI-Smart-Agent)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class Settings:
+    """Gom toàn bộ cấu hình runtime vào một nơi."""
+
+    # --- Claude / Anthropic ---
+    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
+    # Model mặc định: Sonnet 4.6 (chất lượng cao). Đổi sang
+    # "claude-haiku-4-5-20251001" để rẻ & nhanh hơn cho Q&A đơn giản.
+    model: str = os.getenv("SBI_MODEL", "claude-sonnet-4-6")
+    max_tokens: int = int(os.getenv("SBI_MAX_TOKENS", "1024"))
+    # Nhiệt độ thấp để bám sát tri thức, hạn chế "bịa".
+    temperature: float = float(os.getenv("SBI_TEMPERATURE", "0.2"))
+
+    # Số lượt hội thoại gần nhất giữ lại làm ngữ cảnh (mỗi lượt = user + assistant).
+    max_history_turns: int = int(os.getenv("SBI_MAX_HISTORY_TURNS", "12"))
+
+    # --- Dữ liệu ---
+    data_dir: Path = Path(os.getenv("SBI_DATA_DIR", str(BASE_DIR / "data")))
+
+    # --- Server ---
+    # Cloud Run cấp PORT qua biến môi trường (mặc định 8080).
+    port: int = int(os.getenv("PORT", "8080"))
+    host: str = os.getenv("HOST", "0.0.0.0")
+
+    @property
+    def has_api_key(self) -> bool:
+        return bool(self.anthropic_api_key.strip())
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Trả về singleton Settings (cache lại để không đọc env nhiều lần)."""
+    return Settings()

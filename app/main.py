@@ -16,6 +16,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import apikey
+from .analytics import (
+    record_question,
+    related_questions,
+    stats_summary,
+    top_questions,
+)
 from .config import get_settings
 from .knowledge import (
     CATEGORY_LABELS,
@@ -61,6 +67,10 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message] = Field(..., description="Toàn bộ lịch sử hội thoại")
+
+
+class RelatedRequest(BaseModel):
+    question: str = Field("", description="Câu hỏi vừa được hỏi")
 
 
 class LeadRequest(BaseModel):
@@ -118,14 +128,28 @@ def healthz() -> dict:
 
 @app.get("/api/suggestions")
 def suggestions() -> dict:
-    """Danh sách câu hỏi gợi ý hiển thị trên UI."""
-    return {"suggestions": get_suggested_questions()}
+    """Câu hỏi gợi ý: ưu tiên câu thường gặp (theo lượt hỏi), đệm bằng danh sách tĩnh."""
+    merged: list[str] = []
+    for q in [t.get("question", "") for t in top_questions(6)] + get_suggested_questions():
+        if q and q not in merged:
+            merged.append(q)
+    return {"suggestions": merged[:6]}
+
+
+@app.post("/api/related")
+def related(req: RelatedRequest) -> dict:
+    """Gợi ý tối đa 3 câu hỏi liên quan sau khi trả lời."""
+    return {"related": related_questions(req.question, n=3)}
 
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest) -> StreamingResponse:
     """Nhận lịch sử hội thoại, trả về câu trả lời dạng streaming (text/plain)."""
     history = [m.model_dump() for m in req.messages]
+
+    # Ghi nhận câu hỏi mới nhất để thống kê (offload sang thread, không chặn loop).
+    if history and history[-1].get("role") == "user":
+        await asyncio.to_thread(record_question, history[-1]["content"])
 
     async def generate():
         try:
@@ -181,6 +205,12 @@ def admin_check() -> dict:
 async def admin_list_leads() -> dict:
     leads = await asyncio.to_thread(get_store().list_leads)
     return {"count": len(leads), "leads": leads}
+
+
+@app.get("/api/admin/stats", dependencies=[Depends(require_admin)])
+async def admin_stats() -> dict:
+    """Thống kê câu hỏi: tổng lượt, số câu khác nhau, top câu thường gặp."""
+    return await asyncio.to_thread(stats_summary, 20)
 
 
 @app.get("/api/admin/qa", dependencies=[Depends(require_admin)])

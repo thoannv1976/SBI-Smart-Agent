@@ -7,6 +7,8 @@ prompt để tận dụng prompt caching (giảm chi phí & độ trễ cho các
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -240,3 +242,54 @@ def get_suggested_questions(items: list[QAItem] | None = None, n: int = 6) -> li
         "Chương trình có những hướng chuyên sâu nào?",
         "Làm sao để được tư vấn tuyển sinh trực tiếp?",
     ][:n]
+
+
+# --------------------------- So khớp câu hỏi ---------------------------
+# Dùng chung cho: demo mode, gợi ý câu hỏi liên quan, và đếm lượt hỏi (thống kê).
+
+_STOPWORDS = {
+    "la", "gi", "va", "co", "khong", "nhu", "the", "nao", "cua", "cho", "voi",
+    "duoc", "cac", "nhung", "mot", "ban", "minh", "ve", "trong", "den", "tai",
+    "thi", "se", "ra", "sao", "bao", "nhieu", "hay", "ai", "khi",
+}
+
+
+def _normalize(text: str) -> str:
+    """Bỏ dấu, hạ chữ thường để so khớp từ khoá."""
+    text = unicodedata.normalize("NFD", text.lower())
+    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9\s]", " ", text)
+
+
+def question_tokens(text: str) -> set[str]:
+    return {t for t in _normalize(text).split() if t and t not in _STOPWORDS}
+
+
+def rank_qa(
+    text: str,
+    items: list[QAItem] | None = None,
+    n: int = 3,
+    exclude_ids: tuple[str, ...] = (),
+) -> list[QAItem]:
+    """Xếp hạng Q&A liên quan nhất tới `text` bằng độ trùng từ khoá."""
+    items = items if items is not None else load_qa_items()
+    qt = question_tokens(text)
+    if not qt:
+        return []
+    scored: list[tuple[float, QAItem]] = []
+    for it in items:
+        if it.id in exclude_ids:
+            continue
+        a_tokens = set(_normalize(it.question + " " + it.answer).split())
+        q_tokens = set(_normalize(it.question).split())
+        score = len(qt & a_tokens) + 2.0 * len(qt & q_tokens)
+        if score > 0:
+            scored.append((score, it))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [it for _, it in scored[:n]]
+
+
+def best_match(text: str, items: list[QAItem] | None = None) -> QAItem | None:
+    """Q&A khớp nhất với câu hỏi (None nếu không khớp gì)."""
+    ranked = rank_qa(text, items, n=1)
+    return ranked[0] if ranked else None

@@ -36,6 +36,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="qa" type="button">Kho tri thức (Q&amp;A)</button>
       <button class="tab" data-tab="leads" type="button">Đăng ký tư vấn</button>
+      <button class="tab" data-tab="stats" type="button">Thống kê</button>
       <button class="tab" data-tab="settings" type="button">Cấu hình</button>
     </nav>
 
@@ -59,6 +60,26 @@
         <button id="leadsCsv" class="ghost-btn" type="button">⤓ Xuất CSV</button>
       </div>
       <div id="leadsTableWrap" class="table-wrap"></div>
+    </section>
+
+    <!-- Tab Thống kê -->
+    <section id="tab-stats" class="tab-panel" hidden>
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-lbl">Tổng lượt hỏi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statDistinct">0</div>
+          <div class="stat-lbl">Số câu khác nhau</div>
+        </div>
+      </div>
+      <div class="panel-toolbar">
+        <strong>Câu hỏi thường gặp</strong>
+        <span class="spacer"></span>
+        <button id="statsRefresh" class="ghost-btn" type="button">↻ Tải lại</button>
+      </div>
+      <div id="statsTableWrap" class="table-wrap"></div>
     </section>
 
     <!-- Tab Cấu hình -->

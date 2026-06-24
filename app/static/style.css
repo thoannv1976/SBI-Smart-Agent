@@ -108,6 +108,13 @@ html, body {
 }
 .chip:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(29, 78, 216, .12); }
 
+/* Câu hỏi liên quan (gợi ý sau mỗi câu trả lời) */
+.related { margin: 0 0 4px 46px; max-width: 86%; animation: rise .25s ease; }
+.related-label { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+.related-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-sm { padding: 7px 12px; font-size: 12.5px; }
+@media (max-width: 640px) { .related { margin-left: 0; } }
+
 /* Messages */
 .msg { display: flex; gap: 10px; max-width: 86%; animation: rise .25s ease; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

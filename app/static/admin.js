@@ -78,8 +78,10 @@
       const t = btn.dataset.tab;
       $("tab-qa").hidden = t !== "qa";
       $("tab-leads").hidden = t !== "leads";
+      $("tab-stats").hidden = t !== "stats";
       $("tab-settings").hidden = t !== "settings";
       if (t === "settings") loadSettings();
+      if (t === "stats") loadStats();
     });
   });
 
@@ -258,6 +260,38 @@
     a.click();
     URL.revokeObjectURL(a.href);
   });
+
+  // ----------------------------- Thống kê -----------------------------
+  async function loadStats() {
+    try {
+      const d = await (await api("/api/admin/stats")).json();
+      $("statTotal").textContent = d.total_questions || 0;
+      $("statDistinct").textContent = d.distinct_questions || 0;
+      const top = d.top || [];
+      const wrap = $("statsTableWrap");
+      if (!top.length) {
+        wrap.innerHTML = '<div class="empty">Chưa có lượt hỏi nào được ghi nhận.</div>';
+        return;
+      }
+      const rows = top
+        .map(
+          (t, i) => `
+        <tr>
+          <td class="rank">${i + 1}</td>
+          <td>${esc(t.question || "")}</td>
+          <td class="cnt">${t.count || 0}</td>
+          <td>${esc(fmtTime(t.last_asked))}</td>
+        </tr>`
+        )
+        .join("");
+      wrap.innerHTML = `<table class="leads"><thead><tr>
+        <th>#</th><th>Câu hỏi</th><th>Số lượt</th><th>Lần gần nhất</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+    } catch (err) {
+      /* lỗi đăng nhập đã được xử lý ở tab khác */
+    }
+  }
+  $("statsRefresh").addEventListener("click", loadStats);
 
   // ----------------------------- Cấu hình -----------------------------
   function fillModels(models, selected) {

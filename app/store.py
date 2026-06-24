@@ -11,11 +11,16 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from functools import lru_cache
 
 from .config import Settings, get_settings
 
 logger = logging.getLogger("sbi.store")
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
 # --------------------------------------------------------------------------
@@ -28,6 +33,7 @@ class FileStore:
         self.leads_file = settings.leads_file
         self.qa_file = settings.qa_overrides_file
         self.config_file = settings.settings_file
+        self.stats_file = settings.stats_file
 
     # ----- Leads -----
     def add_lead(self, lead: dict) -> None:
@@ -105,6 +111,30 @@ class FileStore:
             json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
+    # ----- Thống kê câu hỏi -----
+    def _read_stats(self) -> dict:
+        if not self.stats_file.exists():
+            return {}
+        try:
+            return json.loads(self.stats_file.read_text(encoding="utf-8")) or {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def incr_question(self, qa_id: str, question: str) -> None:
+        data = self._read_stats()
+        rec = data.get(qa_id) or {"id": qa_id, "question": question, "count": 0}
+        rec["count"] = int(rec.get("count", 0)) + 1
+        rec["question"] = question
+        rec["last_asked"] = _now_iso()
+        data[qa_id] = rec
+        self.stats_file.parent.mkdir(parents=True, exist_ok=True)
+        self.stats_file.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    def question_stats(self) -> list[dict]:
+        return list(self._read_stats().values())
+
 
 # --------------------------------------------------------------------------
 # FirestoreStore - lưu vào Google Cloud Firestore
@@ -122,6 +152,7 @@ class FirestoreStore:
         self._leads = settings.firestore_leads_collection
         self._qa = settings.firestore_qa_collection
         self._cfg = settings.firestore_config_collection
+        self._stats = settings.firestore_stats_collection
 
     # ----- Leads -----
     def add_lead(self, lead: dict) -> None:
@@ -156,6 +187,30 @@ class FirestoreStore:
 
     def set_config(self, data: dict) -> None:
         self._db.collection(self._cfg).document("app").set(data, merge=True)
+
+    # ----- Thống kê câu hỏi -----
+    def incr_question(self, qa_id: str, question: str) -> None:
+        from google.cloud import firestore
+
+        self._db.collection(self._stats).document(qa_id).set(
+            {
+                "id": qa_id,
+                "question": question,
+                "count": firestore.Increment(1),
+                "last_asked": firestore.SERVER_TIMESTAMP,
+            },
+            merge=True,
+        )
+
+    def question_stats(self) -> list[dict]:
+        out: list[dict] = []
+        for doc in self._db.collection(self._stats).stream():
+            d = doc.to_dict() or {}
+            la = d.get("last_asked")
+            if hasattr(la, "isoformat"):
+                d["last_asked"] = la.isoformat(timespec="seconds")
+            out.append(d)
+        return out
 
 
 # --------------------------------------------------------------------------

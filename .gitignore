@@ -21,7 +21,8 @@ venv/
 # Claude Code (cấu hình local cá nhân)
 .claude/
 
-# Lead capture, Q&A override & cấu hình cục bộ (local dev)
+# Lead capture, Q&A override, cấu hình & thống kê cục bộ (local dev)
 data/leads.jsonl
 data/qa_overrides.jsonl
 data/app_settings.json
+data/stats.json

@@ -123,6 +123,7 @@
       if (answer.trim()) {
         botBubble.innerHTML = formatMessage(answer);
         history.push({ role: "assistant", content: answer });
+        await showRelated(text);
         maybeShowCTA();
       } else {
         botBubble.innerHTML = formatMessage("Xin lỗi, mình chưa nhận được phản hồi. Bạn thử lại nhé!");
@@ -273,6 +274,42 @@
       leadSubmit.textContent = "Gửi đăng ký";
     }
   });
+
+  // ----------------------- Câu hỏi liên quan (sau mỗi trả lời) -----------------------
+
+  async function showRelated(question) {
+    let related = [];
+    try {
+      const resp = await fetch("/api/related", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (resp.ok) related = (await resp.json()).related || [];
+    } catch (e) {
+      /* im lặng - gợi ý liên quan không bắt buộc */
+    }
+    if (!related.length) return;
+    const wrap = document.createElement("div");
+    wrap.className = "related";
+    const label = document.createElement("div");
+    label.className = "related-label";
+    label.textContent = "💡 Câu hỏi liên quan";
+    wrap.appendChild(label);
+    const chips = document.createElement("div");
+    chips.className = "related-chips";
+    related.forEach((q) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip chip-sm";
+      chip.textContent = q;
+      chip.addEventListener("click", () => sendMessage(q));
+      chips.appendChild(chip);
+    });
+    wrap.appendChild(chips);
+    chatEl.appendChild(wrap);
+    scrollToBottom();
+  }
 
   // ----------------------- Câu hỏi gợi ý -----------------------
 

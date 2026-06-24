@@ -9,59 +9,30 @@
 from __future__ import annotations
 
 import re
-import unicodedata
 from typing import AsyncIterator
 
 from .config import Settings, get_settings
-from .knowledge import get_cached_system_prompt, load_qa_items
+from .knowledge import best_match, get_cached_system_prompt, question_tokens
 from .runtime import get_runtime_config
-
-# ----------------------------- Tiện ích chung -----------------------------
-
-
-def _normalize(text: str) -> str:
-    """Bỏ dấu, hạ chữ thường để so khớp từ khoá (phục vụ demo mode)."""
-    text = unicodedata.normalize("NFD", text.lower())
-    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
-    return re.sub(r"[^a-z0-9\s]", " ", text)
-
 
 # ----------------------------- Demo mode (không cần API key) -----------------------------
 
-_STOPWORDS = {
-    "la", "gi", "va", "co", "khong", "nhu", "the", "nao", "cua", "cho", "voi",
-    "duoc", "cac", "nhung", "mot", "ban", "minh", "ve", "trong", "den", "tai",
-    "thi", "se", "ra", "sao", "bao", "nhieu", "hay", "ai", "khi",
-}
-
 
 def _demo_reply(user_message: str) -> str:
-    """Truy hồi câu trả lời gần nhất bằng so khớp từ khoá đơn giản."""
-    items = load_qa_items()
-    q_tokens = {t for t in _normalize(user_message).split() if t and t not in _STOPWORDS}
-    if not q_tokens:
+    """Truy hồi câu trả lời gần nhất bằng so khớp từ khoá (tái dùng matcher chung)."""
+    if not question_tokens(user_message):
         return (
             "Xin chào! Mình là trợ lý tư vấn tuyển sinh chương trình SBI - Trường "
             "Đại học Ngoại thương (FTU). Bạn muốn tìm hiểu điều gì về chương trình ạ?"
         )
-
-    best, best_score = None, 0.0
-    for it in items:
-        text_tokens = set(_normalize(it.question + " " + it.answer).split())
-        overlap = len(q_tokens & text_tokens)
-        # ưu tiên trùng khớp ở câu hỏi
-        q_overlap = len(q_tokens & set(_normalize(it.question).split()))
-        score = overlap + 2.0 * q_overlap
-        if score > best_score:
-            best, best_score = it, score
-
-    if best is None or best_score == 0:
+    match = best_match(user_message)
+    if match is None:
         return (
             "Mình chưa có thông tin cho câu hỏi này trong dữ liệu hiện có. Bạn vui "
             "lòng liên hệ trực tiếp Khoa Quản trị Kinh doanh - Trường Đại học Ngoại "
             "thương (FTU) để được tư vấn chính xác nhé!"
         )
-    return best.answer
+    return match.answer
 
 
 # ----------------------------- Tích hợp Claude -----------------------------

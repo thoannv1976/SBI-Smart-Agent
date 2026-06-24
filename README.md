@@ -16,7 +16,8 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 - 💬 Chat **streaming** thời gian thực, giao diện tiếng Việt, responsive (đẹp trên cả mobile).
 - 🧠 **Bám sát tri thức**: trả lời dựa trên 50 Q&A; câu ngoài phạm vi → hướng dẫn liên hệ Khoa QTKD – FTU.
 - ⚡ **Prompt caching** của Claude: nạp toàn bộ tri thức vào ngữ cảnh nhưng vẫn rẻ & nhanh.
-- ✨ **Gợi ý câu hỏi** theo nhóm chủ đề, giữ ngữ cảnh hội thoại nhiều lượt.
+- ✨ **Gợi ý thông minh**: câu thường gặp (theo lượt hỏi thực tế) + **3 câu hỏi liên quan** sau mỗi câu trả lời.
+- 📊 **Thống kê câu hỏi**: đếm số lượt hỏi theo chủ đề, xem câu hỏi thường gặp trong `/admin`.
 - 📞 **Đăng ký tư vấn (lead capture)**: thu thập thông tin khách quan tâm, lưu vào Cloud Logging và (tuỳ chọn) Google Sheet.
 - 🛠️ **Trang quản trị `/admin`**: xem lead, thêm/sửa/xoá Q&A, **nạp Claude API key & chọn model** — tất cả ngay trên web, không cần deploy lại.
 - 💾 **Lưu trữ bền vững (Firestore)**: lead & Q&A không mất khi Cloud Run tái tạo instance (tự fallback file khi chạy local).
@@ -49,9 +50,12 @@ SBI-Smart-Agent/
 │   ├── main.py          # FastAPI: /, /admin, /api/chat, /api/lead, /api/admin/*
 │   ├── config.py        # Cấu hình từ biến môi trường
 │   ├── llm.py           # Client Claude (streaming + caching) + demo mode
-│   ├── knowledge.py     # Nạp & merge Q&A (gốc + admin) → system prompt
+│   ├── knowledge.py     # Nạp & merge Q&A + so khớp câu hỏi → system prompt
+│   ├── analytics.py     # Thống kê lượt hỏi + gợi ý câu hỏi liên quan
 │   ├── leads.py         # Lưu lead (log + Google Sheet + store)
-│   ├── store.py         # Lưu trữ: Firestore hoặc file (tự fallback)
+│   ├── store.py         # Lưu trữ: Firestore hoặc file (lead/Q&A/cấu hình/thống kê)
+│   ├── apikey.py        # Đọc/ghi Claude API key qua Secret Manager
+│   ├── runtime.py       # Cấu hình hiệu lực lúc chạy (env + override admin)
 │   └── static/          # index.html, app.js, style.css + admin.html/js/css
 ├── data/
 │   ├── sbi_qa_dataset.jsonl   # 50 Q&A gốc (knowledge base)
@@ -176,6 +180,8 @@ Truy cập `https://<service-url>/admin`, đăng nhập bằng `SBI_ADMIN_TOKEN`
   cho chatbot (system prompt được dựng lại), không cần deploy lại. Mỗi mục có nhãn
   *Gốc / Đã sửa / Tự thêm* để dễ theo dõi.
 - **Đăng ký tư vấn**: xem danh sách lead, gọi/email nhanh, **xuất CSV**.
+- **Thống kê**: tổng lượt hỏi, số câu khác nhau, và bảng **câu hỏi thường gặp** kèm
+  **số lượt** + thời điểm hỏi gần nhất.
 - **Cấu hình**: nạp/đổi **Claude API key** (ghi vào Secret Manager, *có hiệu lực ngay*
   không cần deploy lại), chọn **model**, chỉnh `max_tokens`/`temperature`, và **kiểm
   tra kết nối**. API không bao giờ trả về key đầy đủ (chỉ hiển thị che `sk-ant…wxyz`).
@@ -208,10 +214,11 @@ thay vì Firestore: `USE_FIRESTORE=0 ./deploy.sh`.
 | `GET` | `/` | Giao diện chat |
 | `POST` | `/api/chat` | Body `{"messages":[{"role","content"}]}` → trả lời streaming (text/plain) |
 | `POST` | `/api/lead` | Đăng ký tư vấn. Body `{"name","phone","email","note","context"}` |
-| `GET` | `/api/suggestions` | Danh sách câu hỏi gợi ý |
+| `GET` | `/api/suggestions` | Câu hỏi gợi ý (ưu tiên câu thường gặp) |
+| `POST` | `/api/related` | 3 câu hỏi liên quan. Body `{"question"}` |
 | `GET` | `/healthz` | Health check |
 | `GET` | `/admin` | Trang quản trị (cần `SBI_ADMIN_TOKEN`) |
-| `*` | `/api/admin/*` | API quản trị lead & Q&A (header `X-Admin-Token`) |
+| `*` | `/api/admin/*` | API quản trị Q&A, lead, thống kê, cấu hình (header `X-Admin-Token`) |
 
 ---
 

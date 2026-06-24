@@ -19,11 +19,13 @@ _tmp = Path(tempfile.gettempdir())
 _leads = _tmp / "sbi_test_leads.jsonl"
 _qa = _tmp / "sbi_test_qa_overrides.jsonl"
 _cfg = _tmp / "sbi_test_app_settings.json"
-for _f in (_leads, _qa, _cfg):
+_stats = _tmp / "sbi_test_stats.json"
+for _f in (_leads, _qa, _cfg, _stats):
     _f.unlink(missing_ok=True)
 os.environ["SBI_LEADS_FILE"] = str(_leads)
 os.environ["SBI_QA_OVERRIDES_FILE"] = str(_qa)
 os.environ["SBI_SETTINGS_FILE"] = str(_cfg)
+os.environ["SBI_STATS_FILE"] = str(_stats)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -250,3 +252,45 @@ def test_admin_test_connection_demo():
 
 def test_admin_settings_requires_token():
     assert client.get("/api/admin/settings").status_code == 401
+
+
+# ----------------------- Thống kê & câu hỏi liên quan -----------------------
+
+
+def test_related_endpoint():
+    r = client.post("/api/related", json={"question": "Học phí chương trình bao nhiêu?"})
+    assert r.status_code == 200
+    rel = r.json()["related"]
+    assert isinstance(rel, list) and 1 <= len(rel) <= 3
+    assert all(isinstance(q, str) and q for q in rel)
+
+
+def test_related_handles_empty():
+    r = client.post("/api/related", json={"question": ""})
+    assert r.status_code == 200
+    assert isinstance(r.json()["related"], list)
+
+
+def test_question_recorded_in_stats():
+    # Hỏi cùng một câu nhiều lần -> lượt đếm tăng
+    for _ in range(3):
+        client.post(
+            "/api/chat",
+            json={"messages": [{"role": "user", "content": "Cơ hội việc làm sau khi tốt nghiệp thế nào?"}]},
+        )
+    body = client.get("/api/admin/stats", headers=ADMIN).json()
+    assert body["total_questions"] >= 3
+    assert body["distinct_questions"] >= 1
+    assert body["top"] and body["top"][0]["count"] >= 1
+    assert "question" in body["top"][0] and "count" in body["top"][0]
+
+
+def test_stats_requires_token():
+    assert client.get("/api/admin/stats").status_code == 401
+
+
+def test_suggestions_reflect_faq():
+    r = client.get("/api/suggestions")
+    assert r.status_code == 200
+    sug = r.json()["suggestions"]
+    assert isinstance(sug, list) and 0 < len(sug) <= 6

@@ -37,6 +37,7 @@
       <button class="tab active" data-tab="qa" type="button">Kho tri thức (Q&amp;A)</button>
       <button class="tab" data-tab="leads" type="button">Đăng ký tư vấn</button>
       <button class="tab" data-tab="stats" type="button">Thống kê</button>
+      <button class="tab" data-tab="integrations" type="button">Tích hợp</button>
       <button class="tab" data-tab="settings" type="button">Cấu hình</button>
     </nav>
 
@@ -80,6 +81,46 @@
         <button id="statsRefresh" class="ghost-btn" type="button">↻ Tải lại</button>
       </div>
       <div id="statsTableWrap" class="table-wrap"></div>
+    </section>
+
+    <!-- Tab Tích hợp (cấu hình cổng portal) -->
+    <section id="tab-integrations" class="tab-panel" hidden>
+      <div class="settings-card" style="max-width:720px">
+        <h3>🏠 Trang chủ</h3>
+        <label>Tiêu đề Hero <input id="intHeroTitle" type="text" placeholder="Thương mại số thông minh & Đổi mới kinh doanh" /></label>
+        <label>Slogan / phụ đề <input id="intHeroSub" type="text" /></label>
+
+        <h3 style="margin-top:20px">▶ YouTube (3 video nổi bật)</h3>
+        <label>Link kênh <input id="intYtChannel" type="url" placeholder="https://youtube.com/@..." /></label>
+        <label>Video 1 (link hoặc ID) <input id="intYt0" type="text" placeholder="https://youtu.be/xxxxxxxxxxx" /></label>
+        <label>Video 2 <input id="intYt1" type="text" /></label>
+        <label>Video 3 <input id="intYt2" type="text" /></label>
+
+        <h3 style="margin-top:20px">🔗 Liên kết hệ sinh thái</h3>
+        <label>Link LMS (hệ thống học tập) <input id="intLms" type="url" /></label>
+        <label>Link công cụ giáo trình / OBE <input id="intObe" type="url" /></label>
+        <label>Link app trắc nghiệm nghề nghiệp <input id="intCareer" type="url" /></label>
+
+        <h3 style="margin-top:20px">📚 Khóa học nổi bật</h3>
+        <div id="courseRows"></div>
+        <button id="addCourse" type="button" class="ghost-btn">+ Thêm khóa học</button>
+
+        <h3 style="margin-top:20px">🌐 Mạng xã hội (chân trang)</h3>
+        <div class="row2">
+          <label>Facebook <input id="soc_facebook" type="url" /></label>
+          <label>TikTok <input id="soc_tiktok" type="url" /></label>
+          <label>YouTube <input id="soc_youtube" type="url" /></label>
+          <label>Zalo <input id="soc_zalo" type="url" /></label>
+          <label>Instagram <input id="soc_instagram" type="url" /></label>
+          <label>Website <input id="soc_website" type="url" /></label>
+        </div>
+
+        <div class="settings-actions">
+          <button id="saveIntegrations" class="primary-btn" type="button">Lưu cấu hình cổng</button>
+          <a href="/" target="_blank" rel="noopener" class="ghost-btn">Xem cổng ↗</a>
+        </div>
+        <p id="intMsg" class="lead-msg" role="status" hidden></p>
+      </div>
     </section>
 
     <!-- Tab Cấu hình -->

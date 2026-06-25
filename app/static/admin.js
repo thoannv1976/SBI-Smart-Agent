@@ -79,9 +79,11 @@
       $("tab-qa").hidden = t !== "qa";
       $("tab-leads").hidden = t !== "leads";
       $("tab-stats").hidden = t !== "stats";
+      $("tab-integrations").hidden = t !== "integrations";
       $("tab-settings").hidden = t !== "settings";
       if (t === "settings") loadSettings();
       if (t === "stats") loadStats();
+      if (t === "integrations") loadIntegrations();
     });
   });
 
@@ -376,6 +378,90 @@
 
   $("saveSettings").addEventListener("click", saveSettings);
   $("testConn").addEventListener("click", testConn);
+
+  // ----------------------------- Tích hợp (cổng portal) -----------------------------
+  const SOCIAL = ["facebook", "tiktok", "youtube", "zalo", "instagram", "website"];
+
+  function courseRow(c = {}) {
+    const div = document.createElement("div");
+    div.className = "course-row";
+    div.innerHTML = `
+      <input class="c-title" placeholder="Tên khóa học" value="${esc(c.title || "")}" />
+      <input class="c-url" placeholder="Link khóa học" value="${esc(c.url || "")}" />
+      <input class="c-desc" placeholder="Mô tả ngắn" value="${esc(c.desc || "")}" />
+      <input class="c-thumb" placeholder="Ảnh (URL, tuỳ chọn)" value="${esc(c.thumbnail || "")}" />
+      <button type="button" class="icon-btn danger c-del" title="Xóa">✕</button>`;
+    div.querySelector(".c-del").addEventListener("click", () => div.remove());
+    return div;
+  }
+
+  async function loadIntegrations() {
+    try {
+      const d = await (await api("/api/admin/portal")).json();
+      $("intHeroTitle").value = d.hero_title || "";
+      $("intHeroSub").value = d.hero_subtitle || "";
+      $("intYtChannel").value = d.youtube_channel_url || "";
+      const vids = d.youtube_video_ids || [];
+      $("intYt0").value = vids[0] || "";
+      $("intYt1").value = vids[1] || "";
+      $("intYt2").value = vids[2] || "";
+      $("intLms").value = d.lms_url || "";
+      $("intObe").value = d.obe_url || "";
+      $("intCareer").value = d.career_test_url || "";
+      const soc = d.social || {};
+      SOCIAL.forEach((k) => { const el = $("soc_" + k); if (el) el.value = soc[k] || ""; });
+      const rows = $("courseRows");
+      rows.innerHTML = "";
+      (d.featured_courses || []).forEach((c) => rows.appendChild(courseRow(c)));
+    } catch (err) {
+      showLogin(err.message);
+    }
+  }
+
+  async function saveIntegrations() {
+    const courses = [...document.querySelectorAll("#courseRows .course-row")].map((r) => ({
+      title: r.querySelector(".c-title").value.trim(),
+      url: r.querySelector(".c-url").value.trim(),
+      desc: r.querySelector(".c-desc").value.trim(),
+      thumbnail: r.querySelector(".c-thumb").value.trim(),
+    }));
+    const social = {};
+    SOCIAL.forEach((k) => (social[k] = ($("soc_" + k).value || "").trim()));
+    const payload = {
+      hero_title: $("intHeroTitle").value.trim(),
+      hero_subtitle: $("intHeroSub").value.trim(),
+      youtube_channel_url: $("intYtChannel").value.trim(),
+      youtube_video_ids: [$("intYt0").value, $("intYt1").value, $("intYt2").value]
+        .map((s) => s.trim())
+        .filter(Boolean),
+      lms_url: $("intLms").value.trim(),
+      obe_url: $("intObe").value.trim(),
+      career_test_url: $("intCareer").value.trim(),
+      featured_courses: courses,
+      social,
+    };
+    const msg = $("intMsg");
+    msg.hidden = true;
+    $("saveIntegrations").disabled = true;
+    try {
+      const r = await api("/api/admin/portal", { method: "POST", body: JSON.stringify(payload) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Lưu thất bại");
+      msg.className = "lead-msg ok";
+      msg.textContent = "✓ Đã lưu cấu hình cổng.";
+      msg.hidden = false;
+      loadIntegrations();
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+      msg.hidden = false;
+    } finally {
+      $("saveIntegrations").disabled = false;
+    }
+  }
+
+  $("addCourse").addEventListener("click", () => $("courseRows").appendChild(courseRow()));
+  $("saveIntegrations").addEventListener("click", saveIntegrations);
 
   // ----------------------------- Khởi động -----------------------------
   document.addEventListener("keydown", (e) => {

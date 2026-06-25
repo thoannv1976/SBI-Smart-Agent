@@ -105,7 +105,7 @@ gắn kết người học chính thức của chương trình.
 | Phase | Tên | Nội dung chính | Ước lượng |
 |---|---|---|---|
 | **0** | Nền tảng (✅ xong) | Chatbot, tri thức, lead, admin, Firestore, Secret Manager, thống kê | Đã có |
-| **1** | **Cổng portal** | Trang chủ dạng hub: hero + tuyển sinh CTA, YouTube top 3, khóa học nổi bật, lối vào chatbot, thẻ liên kết OBE/trắc nghiệm, lead. Trung tâm tích hợp trong /admin | ~1–2 tuần |
+| **1 ✅** | **Cổng portal** | Trang chủ dạng hub: hero + tuyển sinh CTA, YouTube top 3, khóa học nổi bật, chatbot widget, thẻ liên kết OBE/trắc nghiệm, lead. Tab "Tích hợp" trong /admin (quản lý link/video/khóa học, đổi không cần deploy). **Đã xong khung — chờ điền link thật.** | Xong |
 | **2** | Nội dung & SEO | Tin tức/sự kiện/blog, thư viện tài nguyên, trang ngành chuẩn SEO, sitemap, OpenGraph, hiệu năng | ~2–3 tuần |
 | **3** | Danh tính & vòng đời SV | Đăng nhập (Google/SSO), hồ sơ & vai trò (thí sinh/SV/alumni), dashboard cá nhân, thông báo | ~3–4 tuần |
 | **4** | Tích hợp sâu + SSO | API LMS (tiến độ học), kết quả trắc nghiệm → gợi ý, SSO chung các app vệ tinh | ~3–4 tuần |

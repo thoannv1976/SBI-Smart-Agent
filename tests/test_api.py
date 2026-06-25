@@ -91,6 +91,12 @@ def test_suggestions_endpoint():
 def test_index_served():
     r = client.get("/")
     assert r.status_code == 200
+    assert "Thương mại số thông minh" in r.text  # trang chủ là cổng portal
+
+
+def test_chat_page_served():
+    r = client.get("/chat")
+    assert r.status_code == 200
     assert "SBI Smart Agent" in r.text
 
 
@@ -294,3 +300,41 @@ def test_suggestions_reflect_faq():
     assert r.status_code == 200
     sug = r.json()["suggestions"]
     assert isinstance(sug, list) and 0 < len(sug) <= 6
+
+
+# ----------------------------- Cổng portal -----------------------------
+
+
+def test_portal_config_public():
+    r = client.get("/api/portal")
+    assert r.status_code == 200
+    body = r.json()
+    assert "hero_title" in body and "social" in body
+    assert isinstance(body["youtube_video_ids"], list)
+    assert isinstance(body["featured_courses"], list)
+
+
+def test_admin_portal_save():
+    payload = {
+        "youtube_video_ids": ["https://youtu.be/dQw4w9WgXcQ", "abc12345678", "", "thua-thi-cat"],
+        "lms_url": "https://lms.example.com",
+        "featured_courses": [
+            {"title": "Khóa A", "url": "https://x.com", "desc": "Mô tả"},
+            {"title": "", "url": ""},  # rỗng -> bị loại
+        ],
+        "social": {"facebook": "https://fb.com/sbi"},
+    }
+    r = client.post("/api/admin/portal", headers=ADMIN, json=payload)
+    assert r.status_code == 200
+    cfg = r.json()["portal"]
+    assert cfg["lms_url"] == "https://lms.example.com"
+    assert len(cfg["youtube_video_ids"]) == 3  # cắt còn tối đa 3, bỏ rỗng
+    assert len(cfg["featured_courses"]) == 1
+    assert cfg["featured_courses"][0]["title"] == "Khóa A"
+    assert cfg["social"]["facebook"] == "https://fb.com/sbi"
+    # phản ánh ở endpoint công khai
+    assert client.get("/api/portal").json()["lms_url"] == "https://lms.example.com"
+
+
+def test_admin_portal_requires_token():
+    assert client.post("/api/admin/portal", json={}).status_code == 401

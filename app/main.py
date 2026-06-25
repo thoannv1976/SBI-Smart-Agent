@@ -32,6 +32,7 @@ from .knowledge import (
 )
 from .leads import save_lead
 from .llm import stream_reply
+from .portal import get_portal_config, set_portal_config
 from .runtime import get_runtime_config
 from .store import get_store
 
@@ -71,6 +72,18 @@ class ChatRequest(BaseModel):
 
 class RelatedRequest(BaseModel):
     question: str = Field("", description="Câu hỏi vừa được hỏi")
+
+
+class PortalConfig(BaseModel):
+    hero_title: str = ""
+    hero_subtitle: str = ""
+    youtube_channel_url: str = ""
+    youtube_video_ids: list[str] = Field(default_factory=list)
+    lms_url: str = ""
+    featured_courses: list[dict] = Field(default_factory=list)
+    obe_url: str = ""
+    career_test_url: str = ""
+    social: dict = Field(default_factory=dict)
 
 
 class LeadRequest(BaseModel):
@@ -142,6 +155,12 @@ def related(req: RelatedRequest) -> dict:
     return {"related": related_questions(req.question, n=3)}
 
 
+@app.get("/api/portal")
+def portal() -> dict:
+    """Cấu hình cổng portal (công khai): video, khóa học, link tích hợp, mạng xã hội."""
+    return get_portal_config()
+
+
 @app.post("/api/chat")
 async def chat(req: ChatRequest) -> StreamingResponse:
     """Nhận lịch sử hội thoại, trả về câu trả lời dạng streaming (text/plain)."""
@@ -211,6 +230,17 @@ async def admin_list_leads() -> dict:
 async def admin_stats() -> dict:
     """Thống kê câu hỏi: tổng lượt, số câu khác nhau, top câu thường gặp."""
     return await asyncio.to_thread(stats_summary, 20)
+
+
+@app.get("/api/admin/portal", dependencies=[Depends(require_admin)])
+def admin_get_portal() -> dict:
+    return get_portal_config()
+
+
+@app.post("/api/admin/portal", dependencies=[Depends(require_admin)])
+async def admin_set_portal(req: PortalConfig) -> dict:
+    cfg = await asyncio.to_thread(set_portal_config, req.model_dump())
+    return {"ok": True, "portal": cfg}
 
 
 @app.get("/api/admin/qa", dependencies=[Depends(require_admin)])
@@ -310,10 +340,16 @@ def admin_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "admin.html")
 
 
-# Trang chủ
+# Trang chủ (cổng portal)
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+# Trang chat đầy đủ (cũng được nhúng vào widget của cổng)
+@app.get("/chat")
+def chat_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "chat.html")
 
 
 # Tài nguyên tĩnh (css/js) phục vụ tại /static/*

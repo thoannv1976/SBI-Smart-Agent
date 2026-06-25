@@ -3,70 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SBI Smart Agent · Tư vấn tuyển sinh FTU</title>
-  <meta name="description" content="Trợ lý ảo tư vấn chương trình Thương mại số thông minh & Đổi mới kinh doanh (SBI) - Trường Đại học Ngoại thương (FTU)." />
+  <title>SBI · Thương mại số thông minh & Đổi mới kinh doanh — Trường ĐH Ngoại thương</title>
+  <meta name="description" content="Cổng thông tin chương trình Thương mại số thông minh & Đổi mới kinh doanh (SBI) - Trường Đại học Ngoại thương: video, khóa học, trợ lý AI tư vấn, trắc nghiệm nghề nghiệp và hệ sinh thái học tập." />
+  <meta name="keywords" content="SBI, Thương mại số thông minh, Kinh doanh số, Kinh doanh thông minh, Thương mại điện tử, FTU, Ngoại thương, tuyển sinh" />
+  <meta property="og:title" content="SBI — Thương mại số thông minh & Đổi mới kinh doanh (FTU)" />
+  <meta property="og:description" content="Cổng học tập & tuyển sinh chương trình SBI - Trường Đại học Ngoại thương." />
+  <meta property="og:type" content="website" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/portal.css" />
 </head>
-<body>
-  <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="brand">
-        <div class="brand-logo">SBI</div>
-        <div class="brand-text">
-          <h1>SBI Smart Agent</h1>
-          <p>Trợ lý tư vấn tuyển sinh · Trường Đại học Ngoại thương (FTU)</p>
-        </div>
+<body class="portal-body">
+
+  <!-- Thanh điều hướng -->
+  <header class="nav">
+    <a href="/" class="nav-brand">
+      <span class="nav-logo">SBI</span>
+      <span class="nav-title">Thương mại số thông minh<br><small>Trường ĐH Ngoại thương</small></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="#video">Video</a>
+      <a href="#khoa-hoc">Khóa học</a>
+      <a href="#he-sinh-thai">Hệ sinh thái</a>
+      <a href="/chat">Trợ lý AI</a>
+    </nav>
+    <a href="#tu-van" class="nav-cta">Đăng ký tư vấn</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">Ngành Thương mại điện tử · Mã 7340122</div>
+      <h1 id="heroTitle">Thương mại số thông minh &amp; Đổi mới kinh doanh</h1>
+      <p id="heroSubtitle" class="hero-sub">Kết nối công nghệ – Khơi nguồn đổi mới – Kiến tạo giá trị bền vững.</p>
+      <div class="hero-actions">
+        <a href="#tu-van" class="btn btn-primary">📞 Đăng ký tư vấn</a>
+        <button type="button" class="btn btn-ghost" id="heroChatBtn">💬 Hỏi trợ lý AI</button>
       </div>
-      <div class="header-actions">
-        <button id="leadBtn" class="lead-btn" type="button">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          <span class="lead-btn-label">Đăng ký tư vấn</span>
-        </button>
-        <button id="resetBtn" class="reset-btn" title="Bắt đầu hội thoại mới" aria-label="Hội thoại mới">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
+    </div>
+  </section>
+
+  <!-- Giới thiệu -->
+  <section id="gioi-thieu" class="section">
+    <h2 class="section-title">Vì sao chọn SBI?</h2>
+    <div class="feature-grid">
+      <div class="feature"><div class="feature-ico">🎯</div><h3>Định hướng tương lai</h3><p>Đào tạo chuyên gia Thương mại số, kinh doanh thông minh — lĩnh vực dẫn dắt nền kinh tế số.</p></div>
+      <div class="feature"><div class="feature-ico">📚</div><h3>131 tín chỉ</h3><p>Chương trình tích hợp công nghệ, dữ liệu và kinh doanh; chuẩn đầu ra OBE.</p></div>
+      <div class="feature"><div class="feature-ico">🚀</div><h3>Thực hành &amp; dự án</h3><p>Học qua dự án thực tế, công cụ &amp; nền tảng số, kết nối doanh nghiệp.</p></div>
+      <div class="feature"><div class="feature-ico">💼</div><h3>Cơ hội nghề nghiệp</h3><p>Rộng mở trong thương mại điện tử, phân tích dữ liệu, khởi nghiệp số.</p></div>
+    </div>
+  </section>
+
+  <!-- Video -->
+  <section id="video" class="section section-alt" hidden>
+    <h2 class="section-title">Video nổi bật</h2>
+    <div id="videoGrid" class="video-grid"></div>
+    <div class="section-cta"><a id="channelLink" href="#" target="_blank" rel="noopener" class="btn btn-ghost" hidden>▶ Xem kênh YouTube</a></div>
+  </section>
+
+  <!-- Khóa học -->
+  <section id="khoa-hoc" class="section" hidden>
+    <h2 class="section-title">Khóa học nổi bật</h2>
+    <div id="courseGrid" class="course-grid"></div>
+    <div class="section-cta"><a id="lmsBtn" href="#" target="_blank" rel="noopener" class="btn btn-primary" hidden>🎓 Vào hệ thống học tập (LMS)</a></div>
+  </section>
+
+  <!-- Hệ sinh thái -->
+  <section id="he-sinh-thai" class="section section-alt">
+    <h2 class="section-title">Hệ sinh thái SBI</h2>
+    <p class="section-sub">Cổng kết nối tới các công cụ hỗ trợ học tập &amp; triển khai chương trình.</p>
+    <div class="eco-grid">
+      <a href="/chat" class="eco-card">
+        <div class="eco-ico">🤖</div><h3>Trợ lý AI tư vấn</h3>
+        <p>Hỏi đáp tức thì về chương trình, học phí, tuyển sinh.</p>
+      </a>
+      <a id="ecoCareer" class="eco-card eco-link" data-key="career_test_url" target="_blank" rel="noopener">
+        <div class="eco-ico">🧭</div><h3>Trắc nghiệm nghề nghiệp</h3>
+        <p>Khám phá bạn có phù hợp với ngành kinh doanh số.</p>
+      </a>
+      <a id="ecoLms" class="eco-card eco-link" data-key="lms_url" target="_blank" rel="noopener">
+        <div class="eco-ico">📺</div><h3>Hệ thống học tập (LMS)</h3>
+        <p>Khóa học, học liệu và lộ trình đào tạo trực tuyến.</p>
+      </a>
+      <a id="ecoObe" class="eco-card eco-link" data-key="obe_url" target="_blank" rel="noopener">
+        <div class="eco-ico">📝</div><h3>Giáo trình &amp; tài liệu OBE</h3>
+        <p>Công cụ xây dựng giáo trình, chuẩn đầu ra (dành cho giảng viên).</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Đăng ký tư vấn -->
+  <section id="tu-van" class="section lead-section">
+    <div class="lead-box">
+      <div class="lead-info">
+        <h2>Đăng ký tư vấn</h2>
+        <p>Để lại thông tin, đội ngũ tư vấn tuyển sinh chương trình SBI sẽ liên hệ lại với bạn sớm nhất.</p>
+        <ul class="lead-points">
+          <li>✓ Tư vấn ngành học, phương thức xét tuyển</li>
+          <li>✓ Học phí, học bổng &amp; cơ hội nghề nghiệp</li>
+        </ul>
       </div>
-    </header>
-
-    <!-- Khung chat -->
-    <main id="chat" class="chat" aria-live="polite">
-      <!-- Màn hình chào -->
-      <section id="welcome" class="welcome">
-        <div class="welcome-icon">🎓</div>
-        <h2>Xin chào! Mình là trợ lý tư vấn chương trình <span class="accent">SBI</span></h2>
-        <p>
-          Chương trình <strong>Thương mại số thông minh &amp; Đổi mới kinh doanh</strong>
-          (Smart Digital Commerce and Business Innovation) — ngành Thương mại điện tử,
-          Trường Đại học Ngoại thương. Bạn muốn tìm hiểu điều gì ạ?
-        </p>
-        <div id="suggestions" class="suggestions"></div>
-      </section>
-    </main>
-
-    <!-- Ô nhập -->
-    <footer class="composer">
-      <form id="chatForm" class="composer-form">
-        <textarea id="input" class="composer-input" rows="1"
-          placeholder="Nhập câu hỏi về chương trình SBI…" autocomplete="off"></textarea>
-        <button id="sendBtn" type="submit" class="send-btn" aria-label="Gửi">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-        </button>
-      </form>
-      <p class="disclaimer">
-        Thông tin mang tính tham khảo. Vui lòng liên hệ Khoa Quản trị Kinh doanh - FTU để được tư vấn chính thức.
-      </p>
-    </footer>
-  </div>
-
-  <!-- Modal đăng ký tư vấn -->
-  <div id="leadModal" class="modal-overlay" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leadTitle">
-      <button class="modal-close" id="leadClose" type="button" aria-label="Đóng">&times;</button>
-      <h3 id="leadTitle">📞 Đăng ký tư vấn</h3>
-      <p class="modal-sub">Để lại thông tin, đội ngũ tư vấn tuyển sinh chương trình SBI sẽ liên hệ lại với bạn sớm nhất.</p>
-      <form id="leadForm" class="lead-form" novalidate>
+      <form id="pLeadForm" class="lead-form" novalidate>
         <label>Họ và tên <span class="req">*</span>
           <input name="name" type="text" required placeholder="Nguyễn Văn A" />
         </label>
@@ -79,12 +117,44 @@
         <label>Nội dung quan tâm
           <textarea name="note" rows="2" placeholder="Ví dụ: học phí, học bổng, phương thức xét tuyển…"></textarea>
         </label>
-        <button type="submit" class="lead-submit" id="leadSubmit">Gửi đăng ký</button>
-        <p id="leadMsg" class="lead-msg" role="status" hidden></p>
+        <button type="submit" class="lead-submit" id="pLeadSubmit">Gửi đăng ký</button>
+        <p id="pLeadMsg" class="lead-msg" role="status" hidden></p>
       </form>
     </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div>
+        <div class="nav-logo">SBI</div>
+        <p>Chương trình Thương mại số thông minh &amp; Đổi mới kinh doanh — Trường Đại học Ngoại thương.</p>
+      </div>
+      <div>
+        <h4>Liên hệ</h4>
+        <p>Khoa Quản trị Kinh doanh<br>91 Chùa Láng, Đống Đa, Hà Nội</p>
+      </div>
+      <div>
+        <h4>Kết nối</h4>
+        <div id="socialLinks" class="social-links"></div>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="year"></span> SBI · Trường Đại học Ngoại thương (FTU). Thông tin mang tính tham khảo.</div>
+  </footer>
+
+  <!-- Chatbot widget (bong bóng nổi) -->
+  <button id="chatFab" class="chat-fab" type="button" aria-label="Mở trợ lý AI">💬</button>
+  <div id="chatWidget" class="chat-widget" hidden>
+    <div class="chat-widget-head">
+      <span>🎓 Trợ lý tư vấn SBI</span>
+      <div>
+        <a href="/chat" target="_blank" rel="noopener" class="cw-btn" title="Mở tab mới" aria-label="Mở tab mới">⛶</a>
+        <button id="chatWidgetClose" class="cw-btn" type="button" aria-label="Đóng">&times;</button>
+      </div>
+    </div>
+    <iframe id="chatFrame" class="chat-widget-frame" title="Trợ lý tư vấn SBI" loading="lazy"></iframe>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/portal.js"></script>
 </body>
 </html>

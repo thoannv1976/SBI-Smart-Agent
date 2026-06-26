@@ -77,6 +77,7 @@
       btn.classList.add("active");
       const t = btn.dataset.tab;
       $("tab-qa").hidden = t !== "qa";
+      $("tab-training").hidden = t !== "training";
       $("tab-leads").hidden = t !== "leads";
       $("tab-stats").hidden = t !== "stats";
       $("tab-integrations").hidden = t !== "integrations";
@@ -84,6 +85,7 @@
       if (t === "settings") loadSettings();
       if (t === "stats") loadStats();
       if (t === "integrations") loadIntegrations();
+      if (t === "training") loadTraining();
     });
   });
 
@@ -378,6 +380,92 @@
 
   $("saveSettings").addEventListener("click", saveSettings);
   $("testConn").addEventListener("click", testConn);
+
+  // ----------------------------- Huấn luyện chatbot -----------------------------
+  let trainMax = 200000;
+
+  function updateTrainCount() {
+    const n = $("trainText").value.length;
+    const el = $("trainCount");
+    el.textContent = `${n.toLocaleString("vi-VN")} / ${trainMax.toLocaleString("vi-VN")} ký tự`;
+    el.classList.toggle("over", n > trainMax);
+  }
+
+  async function loadTraining() {
+    try {
+      const d = await (await api("/api/admin/training")).json();
+      trainMax = d.max_chars || 200000;
+      $("trainText").value = d.text || "";
+      updateTrainCount();
+    } catch (err) {
+      showLogin(err.message);
+    }
+  }
+
+  async function saveTraining() {
+    const text = $("trainText").value;
+    const msg = $("trainMsg");
+    msg.hidden = true;
+    if (text.length > trainMax) {
+      msg.className = "lead-msg err";
+      msg.textContent = `Vượt giới hạn ${trainMax.toLocaleString("vi-VN")} ký tự.`;
+      msg.hidden = false;
+      return;
+    }
+    $("trainSave").disabled = true;
+    try {
+      const r = await api("/api/admin/training", { method: "POST", body: JSON.stringify({ text }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Lưu thất bại");
+      msg.className = "lead-msg ok";
+      msg.textContent = `✓ Đã lưu (${(d.length || 0).toLocaleString("vi-VN")} ký tự). Chatbot đã cập nhật ngay.`;
+      msg.hidden = false;
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+      msg.hidden = false;
+    } finally {
+      $("trainSave").disabled = false;
+    }
+  }
+
+  $("trainText").addEventListener("input", updateTrainCount);
+  $("trainSave").addEventListener("click", saveTraining);
+  $("trainRestore").addEventListener("click", () => {
+    if (!confirm("Khôi phục mặc định sẽ XÓA toàn bộ tài liệu huấn luyện bổ sung (kho Q&A vẫn giữ nguyên). Tiếp tục?")) return;
+    $("trainText").value = "";
+    updateTrainCount();
+    saveTraining();
+  });
+  $("trainFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const msg = $("trainMsg");
+    msg.hidden = false;
+    msg.className = "lead-msg";
+    msg.textContent = "Đang đọc tệp…";
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const r = await fetch("/api/admin/training/extract", {
+        method: "POST",
+        headers: { "X-Admin-Token": token },
+        body: fd,
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Không đọc được tệp");
+      const cur = $("trainText").value.trim();
+      $("trainText").value = cur ? cur + "\n\n" + d.text : d.text;
+      updateTrainCount();
+      msg.className = "lead-msg ok";
+      msg.textContent = `✓ Đã thêm nội dung từ "${d.filename}". Kiểm tra rồi bấm Lưu.`;
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+    } finally {
+      e.target.value = "";
+    }
+  });
 
   // ----------------------------- Tích hợp (cổng portal) -----------------------------
   const SOCIAL = ["facebook", "tiktok", "youtube", "zalo", "instagram", "website"];

@@ -35,6 +35,7 @@
 
     <nav class="tabs">
       <button class="tab active" data-tab="qa" type="button">Kho tri thức (Q&amp;A)</button>
+      <button class="tab" data-tab="training" type="button">Huấn luyện</button>
       <button class="tab" data-tab="leads" type="button">Đăng ký tư vấn</button>
       <button class="tab" data-tab="stats" type="button">Thống kê</button>
       <button class="tab" data-tab="integrations" type="button">Tích hợp</button>
@@ -50,6 +51,28 @@
         <button id="qaAddBtn" class="primary-btn" type="button">+ Thêm Q&amp;A</button>
       </div>
       <div id="qaList" class="qa-list"></div>
+    </section>
+
+    <!-- Tab Huấn luyện -->
+    <section id="tab-training" class="tab-panel" hidden>
+      <div class="settings-card" style="max-width:840px">
+        <p class="muted">Nhập/sửa <b>tài liệu huấn luyện bổ sung</b> cho chatbot, hoặc tải lên tệp
+          (.txt, .md, .pdf). Nội dung này được nạp <b>cùng</b> kho tri thức Q&amp;A — bấm Lưu là
+          áp dụng ngay, không cần deploy lại.</p>
+        <div class="train-toolbar">
+          <label class="ghost-btn" style="cursor:pointer">⤴ Tải lên tệp (.txt, .md, .pdf)
+            <input id="trainFile" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" hidden />
+          </label>
+          <button id="trainRestore" class="ghost-btn" type="button">↺ Khôi phục mặc định</button>
+          <span class="spacer"></span>
+          <span id="trainCount" class="muted">0 ký tự</span>
+        </div>
+        <textarea id="trainText" class="train-text" placeholder="Dán hoặc nhập nội dung huấn luyện ở đây… (ví dụ: thông tin tuyển sinh chi tiết, học phí, học bổng, FAQ mở rộng)"></textarea>
+        <div class="settings-actions">
+          <button id="trainSave" class="primary-btn" type="button">💾 Lưu dữ liệu huấn luyện</button>
+        </div>
+        <p id="trainMsg" class="lead-msg" role="status" hidden></p>
+      </div>
     </section>
 
     <!-- Tab Leads -->

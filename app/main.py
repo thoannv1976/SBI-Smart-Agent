@@ -9,7 +9,7 @@ import logging
 import re
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,9 +25,12 @@ from .analytics import (
 from .config import get_settings
 from .knowledge import (
     CATEGORY_LABELS,
+    TRAINING_MAX_CHARS,
     delete_qa,
     get_suggested_questions,
+    get_training_text,
     list_qa_admin,
+    set_training_text,
     upsert_qa,
 )
 from .leads import save_lead
@@ -72,6 +75,10 @@ class ChatRequest(BaseModel):
 
 class RelatedRequest(BaseModel):
     question: str = Field("", description="Câu hỏi vừa được hỏi")
+
+
+class TrainingRequest(BaseModel):
+    text: str = Field("", description="Tài liệu huấn luyện bổ sung (văn bản)")
 
 
 class PortalConfig(BaseModel):
@@ -241,6 +248,46 @@ def admin_get_portal() -> dict:
 async def admin_set_portal(req: PortalConfig) -> dict:
     cfg = await asyncio.to_thread(set_portal_config, req.model_dump())
     return {"ok": True, "portal": cfg}
+
+
+# --------------------------- Huấn luyện chatbot ---------------------------
+
+
+def _extract_pdf(data: bytes) -> str:
+    import io
+
+    from pypdf import PdfReader
+
+    reader = PdfReader(io.BytesIO(data))
+    return "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+
+
+@app.get("/api/admin/training", dependencies=[Depends(require_admin)])
+def admin_get_training() -> dict:
+    return {"text": get_training_text(), "max_chars": TRAINING_MAX_CHARS}
+
+
+@app.post("/api/admin/training", dependencies=[Depends(require_admin)])
+async def admin_set_training(req: TrainingRequest) -> dict:
+    length = await asyncio.to_thread(set_training_text, req.text)
+    return {"ok": True, "length": length, "max_chars": TRAINING_MAX_CHARS}
+
+
+@app.post("/api/admin/training/extract", dependencies=[Depends(require_admin)])
+async def admin_training_extract(file: UploadFile = File(...)) -> dict:
+    """Trích xuất văn bản từ tệp .txt/.md/.pdf để admin đưa vào ô huấn luyện."""
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Tệp quá lớn (tối đa 10MB).")
+    name = (file.filename or "").lower()
+    if name.endswith(".pdf"):
+        try:
+            text = await asyncio.to_thread(_extract_pdf, data)
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=f"Không đọc được PDF: {exc}")
+    else:
+        text = data.decode("utf-8", errors="ignore")
+    return {"text": text[:TRAINING_MAX_CHARS], "filename": file.filename}
 
 
 @app.get("/api/admin/qa", dependencies=[Depends(require_admin)])

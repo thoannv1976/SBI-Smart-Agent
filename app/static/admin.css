@@ -58,7 +58,18 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
   background: rgba(255,255,255,.2); color: #fff; text-transform: uppercase; letter-spacing: .4px;
 }
 
-.tabs { display: flex; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--border); }
+
+/* Huấn luyện */
+.train-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 10px; }
+.train-text {
+  width: 100%; min-height: 400px; resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px; line-height: 1.55; padding: 14px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); outline: none;
+}
+.train-text:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(29, 78, 216, .12); }
+#trainCount.over { color: #dc2626; font-weight: 700; }
 .tab {
   border: none; background: transparent; cursor: pointer; font-family: inherit;
   font-size: 14.5px; font-weight: 600; color: var(--ink-soft);

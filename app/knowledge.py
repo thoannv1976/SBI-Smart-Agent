@@ -135,14 +135,24 @@ def build_system_prompt(data_dir: Path | None = None) -> str:
     base = load_base_system_prompt(data_dir)
     knowledge = build_knowledge_block(items)
 
+    training = get_training_text()
+    training_block = ""
+    if training:
+        training_block = (
+            "\n\n================ TÀI LIỆU HUẤN LUYỆN BỔ SUNG ================\n"
+            "Thông tin bổ sung do quản trị viên cung cấp — dùng kết hợp với kho tri thức ở trên:\n\n"
+            f"{training}\n"
+            "================ HẾT TÀI LIỆU BỔ SUNG ================"
+        )
+
     return f"""{base}
 
 ================ KHO TRI THỨC THAM CHIẾU (SBI - FTU) ================
 Dưới đây là toàn bộ thông tin chính thức về chương trình SBI. Hãy CHỈ dựa vào
-thông tin này để trả lời.
+thông tin này (và TÀI LIỆU HUẤN LUYỆN BỔ SUNG bên dưới nếu có) để trả lời.
 
 {knowledge}
-================ HẾT KHO TRI THỨC ================
+================ HẾT KHO TRI THỨC ================{training_block}
 
 QUY TẮC TRẢ LỜI:
 1. Chỉ trả lời dựa trên KHO TRI THỨC ở trên. Tuyệt đối không bịa đặt thông tin
@@ -174,6 +184,28 @@ def reload_knowledge() -> None:
     """Dựng lại system prompt sau khi kho tri thức thay đổi (admin)."""
     global _SYSTEM_PROMPT_CACHE
     _SYSTEM_PROMPT_CACHE = build_system_prompt()
+
+
+# --------------------------- Huấn luyện chatbot (admin) ---------------------------
+# Tài liệu huấn luyện bổ sung dạng văn bản tự do (ngoài bộ Q&A có cấu trúc), được
+# admin nhập/tải lên và nạp thẳng vào system prompt — có hiệu lực ngay.
+
+TRAINING_MAX_CHARS = 200_000
+
+
+def get_training_text() -> str:
+    try:
+        return (get_store().get_config().get("training_text") or "").strip()
+    except Exception:
+        return ""
+
+
+def set_training_text(text: str) -> int:
+    """Lưu tài liệu huấn luyện (cắt theo giới hạn) + rebuild prompt. Trả về độ dài."""
+    text = (text or "").strip()[:TRAINING_MAX_CHARS]
+    get_store().set_config({"training_text": text})
+    reload_knowledge()
+    return len(text)
 
 
 # --------------------------- Quản trị Q&A (admin) ---------------------------

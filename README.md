@@ -19,7 +19,7 @@ thực hành – dự án, công nghệ, cơ hội việc làm… dựa trên b�
 - ✨ **Gợi ý thông minh**: câu thường gặp (theo lượt hỏi thực tế) + **3 câu hỏi liên quan** sau mỗi câu trả lời.
 - 📊 **Thống kê câu hỏi**: đếm số lượt hỏi theo chủ đề, xem câu hỏi thường gặp trong `/admin`.
 - 📞 **Đăng ký tư vấn (lead capture)**: thu thập thông tin khách quan tâm, lưu vào Cloud Logging và (tuỳ chọn) Google Sheet.
-- 🛠️ **Trang quản trị `/admin`**: xem lead, thêm/sửa/xoá Q&A, **nạp Claude API key & chọn model** — tất cả ngay trên web, không cần deploy lại.
+- 🛠️ **Trang quản trị `/admin`**: thêm/sửa Q&A, **huấn luyện chatbot** (nhập text hoặc tải .txt/.md/.pdf), xem lead, **nạp Claude API key & chọn model** — tất cả ngay trên web, không cần deploy lại.
 - 💾 **Lưu trữ bền vững (Firestore)**: lead & Q&A không mất khi Cloud Run tái tạo instance (tự fallback file khi chạy local).
 - 🧪 **Demo mode**: chạy được ngay cả khi chưa có API key (truy hồi câu trả lời từ dataset).
 
@@ -179,6 +179,9 @@ Truy cập `https://<service-url>/admin`, đăng nhập bằng `SBI_ADMIN_TOKEN`
 - **Kho tri thức (Q&A)**: thêm / sửa / xoá câu hỏi-đáp. Thay đổi áp dụng **ngay**
   cho chatbot (system prompt được dựng lại), không cần deploy lại. Mỗi mục có nhãn
   *Gốc / Đã sửa / Tự thêm* để dễ theo dõi.
+- **Huấn luyện**: nhập/sửa **tài liệu huấn luyện bổ sung** dạng văn bản tự do, hoặc
+  **tải lên .txt/.md/.pdf**; nội dung được nạp cùng kho Q&A vào chatbot. Có nút *Khôi
+  phục mặc định* và bộ đếm ký tự (tối đa 200.000).
 - **Đăng ký tư vấn**: xem danh sách lead, gọi/email nhanh, **xuất CSV**.
 - **Thống kê**: tổng lượt hỏi, số câu khác nhau, và bảng **câu hỏi thường gặp** kèm
   **số lượt** + thời điểm hỏi gần nhất.
@@ -218,7 +221,7 @@ thay vì Firestore: `USE_FIRESTORE=0 ./deploy.sh`.
 | `POST` | `/api/related` | 3 câu hỏi liên quan. Body `{"question"}` |
 | `GET` | `/healthz` | Health check |
 | `GET` | `/admin` | Trang quản trị (cần `SBI_ADMIN_TOKEN`) |
-| `*` | `/api/admin/*` | API quản trị Q&A, lead, thống kê, cấu hình (header `X-Admin-Token`) |
+| `*` | `/api/admin/*` | API quản trị Q&A, huấn luyện, lead, thống kê, cấu hình (header `X-Admin-Token`) |
 
 ---
 

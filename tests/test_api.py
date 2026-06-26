@@ -338,3 +338,43 @@ def test_admin_portal_save():
 
 def test_admin_portal_requires_token():
     assert client.post("/api/admin/portal", json={}).status_code == 401
+
+
+# ----------------------------- Huấn luyện chatbot -----------------------------
+
+
+def test_training_get():
+    r = client.get("/api/admin/training", headers=ADMIN)
+    assert r.status_code == 200
+    body = r.json()
+    assert "text" in body and body["max_chars"] > 0
+
+
+def test_training_requires_token():
+    assert client.get("/api/admin/training").status_code == 401
+
+
+def test_training_save_and_in_prompt():
+    marker = "Điểm bổ sung XYZ-HUANLUYEN-123 cho kiểm thử."
+    r = client.post("/api/admin/training", headers=ADMIN, json={"text": marker})
+    assert r.status_code == 200
+    assert r.json()["length"] >= len(marker.strip())
+    prompt = build_system_prompt()
+    assert marker in prompt
+    assert "HẾT TÀI LIỆU BỔ SUNG" in prompt  # dấu mốc duy nhất của khối huấn luyện
+    assert client.get("/api/admin/training", headers=ADMIN).json()["text"].startswith("Điểm bổ sung")
+    # Khôi phục mặc định (xóa) -> khối huấn luyện biến mất khỏi prompt
+    client.post("/api/admin/training", headers=ADMIN, json={"text": ""})
+    after = build_system_prompt()
+    assert marker not in after
+    assert "HẾT TÀI LIỆU BỔ SUNG" not in after
+
+
+def test_training_extract_txt():
+    r = client.post(
+        "/api/admin/training/extract",
+        headers=ADMIN,
+        files={"file": ("ghichu.txt", "Nội dung huấn luyện từ tệp.".encode("utf-8"), "text/plain")},
+    )
+    assert r.status_code == 200
+    assert "huấn luyện từ tệp" in r.json()["text"]

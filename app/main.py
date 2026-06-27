@@ -22,6 +22,7 @@ from .analytics import (
     stats_summary,
     top_questions,
 )
+from .auth import set_password, verify_password
 from .config import get_settings
 from .knowledge import (
     CATEGORY_LABELS,
@@ -81,6 +82,11 @@ class TrainingRequest(BaseModel):
     text: str = Field("", description="Tài liệu huấn luyện bổ sung (văn bản)")
 
 
+class PasswordRequest(BaseModel):
+    current_password: str = Field("", description="Mật khẩu hiện tại")
+    new_password: str = Field("", description="Mật khẩu mới")
+
+
 class PortalConfig(BaseModel):
     hero_title: str = ""
     hero_subtitle: str = ""
@@ -122,14 +128,9 @@ class SettingsRequest(BaseModel):
 
 
 def require_admin(x_admin_token: str = Header(default="")) -> None:
-    """Bảo vệ các API /api/admin/* bằng token trong SBI_ADMIN_TOKEN."""
-    if not settings.admin_token:
-        raise HTTPException(
-            status_code=503,
-            detail="Trang quản trị chưa được bật. Hãy đặt biến SBI_ADMIN_TOKEN.",
-        )
-    if x_admin_token != settings.admin_token:
-        raise HTTPException(status_code=401, detail="Token quản trị không hợp lệ.")
+    """Bảo vệ các API /api/admin/* bằng mật khẩu quản trị (mặc định Abc@123456)."""
+    if not verify_password(x_admin_token):
+        raise HTTPException(status_code=401, detail="Mật khẩu quản trị không đúng.")
 
 
 # ------------------------------- Routes -------------------------------
@@ -241,8 +242,20 @@ async def create_lead(req: LeadRequest) -> dict:
 
 @app.get("/api/admin/check", dependencies=[Depends(require_admin)])
 def admin_check() -> dict:
-    """Xác thực token + trả về thông tin nền tảng lưu trữ."""
+    """Xác thực mật khẩu + trả về thông tin nền tảng lưu trữ."""
     return {"ok": True, "storage": get_store().backend}
+
+
+@app.post("/api/admin/password", dependencies=[Depends(require_admin)])
+def admin_change_password(req: PasswordRequest) -> dict:
+    """Đổi mật khẩu quản trị (yêu cầu nhập đúng mật khẩu hiện tại)."""
+    if not verify_password(req.current_password):
+        raise HTTPException(status_code=401, detail="Mật khẩu hiện tại không đúng.")
+    try:
+        set_password(req.new_password)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"ok": True, "message": "Đã đổi mật khẩu thành công."}
 
 
 @app.get("/api/admin/leads", dependencies=[Depends(require_admin)])

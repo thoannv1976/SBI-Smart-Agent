@@ -15,8 +15,8 @@
     <form id="loginForm" class="login-card">
       <div class="login-logo">SBI</div>
       <h1>Trang quản trị</h1>
-      <p class="muted">Nhập token quản trị (<code>SBI_ADMIN_TOKEN</code>) để tiếp tục.</p>
-      <input id="tokenInput" type="password" placeholder="Token quản trị" autocomplete="current-password" />
+      <p class="muted">Nhập mật khẩu quản trị để tiếp tục.</p>
+      <input id="tokenInput" type="password" placeholder="Mật khẩu quản trị" autocomplete="current-password" />
       <button type="submit" class="primary-btn">Đăng nhập</button>
       <p id="loginMsg" class="lead-msg err" hidden></p>
     </form>
@@ -175,6 +175,15 @@
           <button id="testConn" class="ghost-btn" type="button">Kiểm tra kết nối</button>
         </div>
         <p id="settingsMsg" class="lead-msg" role="status" hidden></p>
+
+        <h3 style="margin-top:24px">🔒 Đổi mật khẩu quản trị</h3>
+        <label>Mật khẩu hiện tại <input id="pwCurrent" type="password" autocomplete="current-password" /></label>
+        <label>Mật khẩu mới <input id="pwNew" type="password" autocomplete="new-password" placeholder="Tối thiểu 6 ký tự" /></label>
+        <label>Nhập lại mật khẩu mới <input id="pwConfirm" type="password" autocomplete="new-password" /></label>
+        <div class="settings-actions">
+          <button id="pwSave" class="primary-btn" type="button">Đổi mật khẩu</button>
+        </div>
+        <p id="pwMsg" class="lead-msg" role="status" hidden></p>
       </div>
     </section>
   </div>

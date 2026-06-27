@@ -125,7 +125,7 @@ qua **Cloud Build** → deploy lên **Cloud Run** và in ra URL dịch vụ.
 | `SBI_TEMPERATURE` | `0.2` | Độ "sáng tạo" (thấp = bám dữ liệu). |
 | `SBI_MAX_HISTORY_TURNS` | `12` | Số lượt hội thoại giữ làm ngữ cảnh. |
 | `SBI_LEADS_WEBHOOK_URL` | *(trống)* | (Tuỳ chọn) URL Google Apps Script để ghi lead vào Google Sheet. |
-| `SBI_ADMIN_TOKEN` | *(trống)* | Token bảo vệ `/admin`. Trống → trang quản trị bị tắt. |
+| `SBI_ADMIN_TOKEN` | *(trống)* | Mật khẩu **khôi phục** cho `/admin`. Đăng nhập mặc định: `Abc@123456` (đổi trong Cấu hình). |
 | `SBI_USE_FIRESTORE` | `auto` | `auto`/`1`/`0` — dùng Firestore hay file cục bộ. |
 | `SBI_FIRESTORE_PROJECT` | *(trống)* | Project GCP chứa Firestore (Cloud Run đặt sẵn trong `deploy.sh`). |
 | `SBI_USE_SECRET_MANAGER` | `auto` | Cho phép nạp API key từ `/admin` (lưu Secret Manager). |
@@ -186,11 +186,12 @@ Truy cập `https://<service-url>/admin`, đăng nhập bằng `SBI_ADMIN_TOKEN`
 - **Thống kê**: tổng lượt hỏi, số câu khác nhau, và bảng **câu hỏi thường gặp** kèm
   **số lượt** + thời điểm hỏi gần nhất.
 - **Cấu hình**: nạp/đổi **Claude API key** (ghi vào Secret Manager, *có hiệu lực ngay*
-  không cần deploy lại), chọn **model**, chỉnh `max_tokens`/`temperature`, và **kiểm
-  tra kết nối**. API không bao giờ trả về key đầy đủ (chỉ hiển thị che `sk-ant…wxyz`).
+  không cần deploy lại), chọn **model**, chỉnh `max_tokens`/`temperature`, **kiểm tra
+  kết nối**, và **đổi mật khẩu quản trị**. API không bao giờ trả về key đầy đủ.
 
-> Bảo mật: để trống `SBI_ADMIN_TOKEN` thì toàn bộ `/api/admin/*` trả về 503 (tắt).
-> Hãy đặt token đủ mạnh khi bật.
+> **Đăng nhập:** mật khẩu mặc định `Abc@123456` — hãy **đổi ngay** trong tab *Cấu hình*
+> sau lần đăng nhập đầu. Mật khẩu lưu dạng **hash** (PBKDF2, có salt), không lưu thô.
+> `SBI_ADMIN_TOKEN` (nếu đặt) luôn dùng được làm mật khẩu **khôi phục** khi quên.
 
 ## 💾 Lưu trữ bền vững (Firestore)
 

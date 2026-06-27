@@ -386,3 +386,44 @@ def test_training_extract_txt():
     )
     assert r.status_code == 200
     assert "huấn luyện từ tệp" in r.json()["text"]
+
+
+# ----------------------- Đăng nhập & đổi mật khẩu admin -----------------------
+# (Các test này đặt CUỐI vì sẽ đặt mật khẩu mới, vô hiệu hoá mật khẩu mặc định.)
+
+
+def test_admin_default_password():
+    # Mật khẩu mặc định đăng nhập được khi chưa đổi
+    assert client.get("/api/admin/check", headers={"X-Admin-Token": "Abc@123456"}).status_code == 200
+
+
+def test_admin_wrong_password():
+    assert client.get("/api/admin/check", headers={"X-Admin-Token": "sai-mat-khau"}).status_code == 401
+
+
+def test_admin_change_password():
+    r = client.post(
+        "/api/admin/password",
+        headers=ADMIN,
+        json={"current_password": "test-token", "new_password": "MoiPass@2026"},
+    )
+    assert r.status_code == 200
+    # Mật khẩu mới đăng nhập được
+    assert client.get("/api/admin/check", headers={"X-Admin-Token": "MoiPass@2026"}).status_code == 200
+    # Mật khẩu mặc định KHÔNG còn dùng được sau khi đã đặt
+    assert client.get("/api/admin/check", headers={"X-Admin-Token": "Abc@123456"}).status_code == 401
+    # Token môi trường vẫn vào được (khôi phục)
+    assert client.get("/api/admin/check", headers=ADMIN).status_code == 200
+
+
+def test_admin_change_password_validation():
+    # current sai -> 401
+    assert client.post(
+        "/api/admin/password", headers=ADMIN,
+        json={"current_password": "sai", "new_password": "HopLe@123"},
+    ).status_code == 401
+    # new quá ngắn -> 422
+    assert client.post(
+        "/api/admin/password", headers=ADMIN,
+        json={"current_password": "test-token", "new_password": "123"},
+    ).status_code == 422

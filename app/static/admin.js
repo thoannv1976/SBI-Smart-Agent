@@ -381,6 +381,50 @@
   $("saveSettings").addEventListener("click", saveSettings);
   $("testConn").addEventListener("click", testConn);
 
+  // Đổi mật khẩu quản trị
+  $("pwSave").addEventListener("click", async () => {
+    const cur = $("pwCurrent").value;
+    const nw = $("pwNew").value;
+    const cf = $("pwConfirm").value;
+    const msg = $("pwMsg");
+    msg.hidden = true;
+    msg.className = "lead-msg";
+    if (nw.length < 6) {
+      msg.className = "lead-msg err";
+      msg.textContent = "Mật khẩu mới phải từ 6 ký tự trở lên.";
+      msg.hidden = false;
+      return;
+    }
+    if (nw !== cf) {
+      msg.className = "lead-msg err";
+      msg.textContent = "Mật khẩu nhập lại không khớp.";
+      msg.hidden = false;
+      return;
+    }
+    $("pwSave").disabled = true;
+    try {
+      const r = await api("/api/admin/password", {
+        method: "POST",
+        body: JSON.stringify({ current_password: cur, new_password: nw }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Đổi mật khẩu thất bại");
+      // Cập nhật mật khẩu đang dùng để giữ phiên đăng nhập
+      token = nw;
+      localStorage.setItem(TOKEN_KEY, token);
+      $("pwCurrent").value = $("pwNew").value = $("pwConfirm").value = "";
+      msg.className = "lead-msg ok";
+      msg.textContent = "✓ " + (d.message || "Đã đổi mật khẩu.");
+      msg.hidden = false;
+    } catch (err) {
+      msg.className = "lead-msg err";
+      msg.textContent = "⚠️ " + err.message;
+      msg.hidden = false;
+    } finally {
+      $("pwSave").disabled = false;
+    }
+  });
+
   // ----------------------------- Huấn luyện chatbot -----------------------------
   let trainMax = 200000;
 

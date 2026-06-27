@@ -69,7 +69,7 @@
 
     const avatar = document.createElement("div");
     avatar.className = "avatar";
-    avatar.textContent = role === "user" ? "🧑" : "🎓";
+    avatar.textContent = role === "user" ? "🧑" : "🤖";
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
@@ -206,7 +206,7 @@
     wrap.className = "msg bot";
     const avatar = document.createElement("div");
     avatar.className = "avatar";
-    avatar.textContent = "🎓";
+    avatar.textContent = "🤖";
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.innerHTML =
@@ -295,7 +295,7 @@
     wrap.className = "related";
     const label = document.createElement("div");
     label.className = "related-label";
-    label.textContent = "💡 Câu hỏi liên quan";
+    label.textContent = "✨ Gợi ý câu hỏi liên quan tiếp theo";
     wrap.appendChild(label);
     const chips = document.createElement("div");
     chips.className = "related-chips";

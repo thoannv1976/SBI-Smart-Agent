@@ -1,16 +1,16 @@
 :root {
-  --bg: #0f1729;
+  --bg: #2a0e12;
   --surface: #ffffff;
-  --surface-2: #f1f5fb;
-  --ink: #1a2238;
-  --ink-soft: #5b6478;
-  --brand: #1d4ed8;
-  --brand-2: #0ea5a4;
-  --brand-grad: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 45%, #0ea5a4 100%);
-  --user-bubble: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 100%);
-  --bot-bubble: #f1f5fb;
-  --border: #e2e8f0;
-  --shadow: 0 10px 40px rgba(15, 23, 41, .12);
+  --surface-2: #fbf0f1;
+  --ink: #231318;
+  --ink-soft: #6e5a5e;
+  --brand: #c1102e;
+  --brand-2: #e23744;
+  --brand-grad: linear-gradient(135deg, #7d0f1d 0%, #b81229 48%, #e23744 100%);
+  --user-bubble: linear-gradient(135deg, #b81229 0%, #e23744 100%);
+  --bot-bubble: #f7eef0;
+  --border: #eadde0;
+  --shadow: 0 12px 40px rgba(90, 12, 24, .14);
   --radius: 18px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
@@ -22,8 +22,8 @@ html, body {
   font-family: var(--font);
   color: var(--ink);
   background:
-    radial-gradient(1100px 600px at 10% -10%, #1e3a8a33, transparent 60%),
-    radial-gradient(900px 600px at 110% 10%, #0ea5a433, transparent 55%),
+    radial-gradient(1100px 600px at 10% -10%, #7d0f1d44, transparent 60%),
+    radial-gradient(900px 600px at 110% 10%, #e2374433, transparent 55%),
     var(--bg);
 }
 
@@ -41,20 +41,20 @@ html, body {
 .workspace { display: flex; flex: 1; min-height: 0; }
 .chat-col { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .faq-sidebar {
-  width: 290px; flex-shrink: 0; overflow-y: auto;
-  border-right: 1px solid var(--border); background: var(--surface); padding: 14px 12px;
+  width: 300px; flex-shrink: 0; overflow-y: auto;
+  border-right: 1px solid var(--border); background: var(--surface-2); padding: 16px 13px;
 }
-.faq-head { font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--ink); }
+.faq-head { font-weight: 800; font-size: 12.5px; letter-spacing: .3px; text-transform: uppercase; margin-bottom: 12px; color: var(--brand); }
 .faq-list { display: flex; flex-direction: column; gap: 8px; }
 .faq-item {
-  display: flex; align-items: flex-start; gap: 8px; justify-content: space-between; width: 100%;
-  text-align: left; cursor: pointer; font-family: inherit; font-size: 13px; line-height: 1.4;
+  display: flex; align-items: flex-start; gap: 9px; justify-content: space-between; width: 100%;
+  text-align: left; cursor: pointer; font-family: inherit; font-size: 13px; line-height: 1.45;
   color: var(--ink); background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 9px 11px; transition: border-color .15s, color .15s, transform .15s;
+  border-radius: 12px; padding: 10px 12px; transition: border-color .15s, box-shadow .15s, transform .15s;
 }
-.faq-item:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+.faq-item:hover { border-color: var(--brand); box-shadow: 0 4px 14px rgba(193, 16, 46, .10); transform: translateY(-1px); }
 .faq-q { flex: 1; }
-.faq-count { flex-shrink: 0; background: var(--surface-2); color: var(--ink-soft); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+.faq-count { flex-shrink: 0; min-width: 22px; text-align: center; background: #fce4e7; color: var(--brand); border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
 @media (max-width: 720px) { .faq-sidebar { display: none; } }
 
 /* ---------------- Header ---------------- */
@@ -132,7 +132,9 @@ html, body {
 .related { margin: 0 0 4px 46px; max-width: 86%; animation: rise .25s ease; }
 .related-label { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
 .related-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip-sm { padding: 7px 12px; font-size: 12.5px; }
+.chip-sm { padding: 7px 13px; font-size: 12.5px; background: #fdeef0; border-color: #f3cdd3; color: var(--brand); font-weight: 600; }
+.chip-sm:hover { background: #fff; border-color: var(--brand); color: var(--brand); }
+.related-chips .chip-sm::after { content: " →"; font-weight: 800; }
 @media (max-width: 640px) { .related { margin-left: 0; } }
 
 /* Messages */

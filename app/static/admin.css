@@ -22,6 +22,8 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-
 .ghost-btn:hover { background: var(--surface-2); }
 
 /* ---------------- Đăng nhập ---------------- */
+/* Bảo đảm thuộc tính [hidden] luôn thắng display:flex bên dưới */
+.admin-login[hidden], .admin-app[hidden] { display: none !important; }
 .admin-login { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .login-card {
   width: 100%; max-width: 360px; background: var(--surface);

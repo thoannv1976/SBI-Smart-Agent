@@ -12,27 +12,51 @@ import re
 from typing import AsyncIterator
 
 from .config import Settings, get_settings
-from .knowledge import best_match, get_cached_system_prompt, question_tokens
+from .knowledge import (
+    get_cached_system_prompt,
+    question_tokens,
+    rank_qa_scored,
+    search_training,
+)
 from .runtime import get_runtime_config
 
 # ----------------------------- Demo mode (không cần API key) -----------------------------
 
 
+def _format_training_chunk(block: str, limit: int = 900) -> str:
+    block = block.strip()
+    if len(block) > limit:
+        block = block[:limit].rsplit(" ", 1)[0] + "…"
+    return block
+
+
 def _demo_reply(user_message: str) -> str:
-    """Truy hồi câu trả lời gần nhất bằng so khớp từ khoá (tái dùng matcher chung)."""
+    """Truy hồi câu trả lời từ tài liệu huấn luyện hoặc Q&A (so khớp từ khoá).
+
+    Ưu tiên tài liệu huấn luyện do admin nạp (được coi là nguồn chính thức), sau
+    đó tới bộ Q&A. Dùng khi chưa cấu hình API key (demo mode).
+    """
     if not question_tokens(user_message):
         return (
             "Xin chào! Mình là trợ lý tư vấn tuyển sinh chương trình SBI - Trường "
             "Đại học Ngoại thương (FTU). Bạn muốn tìm hiểu điều gì về chương trình ạ?"
         )
-    match = best_match(user_message)
-    if match is None:
-        return (
-            "Mình chưa có thông tin cho câu hỏi này trong dữ liệu hiện có. Bạn vui "
-            "lòng liên hệ trực tiếp Khoa Quản trị Kinh doanh - Trường Đại học Ngoại "
-            "thương (FTU) để được tư vấn chính xác nhé!"
-        )
-    return match.answer
+    qa = rank_qa_scored(user_message, n=1)
+    tr = search_training(user_message, n=1)
+    tr_score = tr[0][0] if tr else 0.0
+
+    # Tài liệu huấn luyện khớp tốt -> ưu tiên (admin coi đây là nguồn chính thức)
+    if tr_score >= 2:
+        return _format_training_chunk(tr[0][1])
+    if qa:
+        return qa[0][1].answer
+    if tr_score >= 1:
+        return _format_training_chunk(tr[0][1])
+    return (
+        "Mình chưa có thông tin cho câu hỏi này trong dữ liệu hiện có. Bạn vui "
+        "lòng liên hệ trực tiếp Khoa Quản trị Kinh doanh - Trường Đại học Ngoại "
+        "thương (FTU) để được tư vấn chính xác nhé!"
+    )
 
 
 # ----------------------------- Tích hợp Claude -----------------------------

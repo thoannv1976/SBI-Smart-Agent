@@ -388,6 +388,18 @@ def test_training_extract_txt():
     assert "huấn luyện từ tệp" in r.json()["text"]
 
 
+def test_demo_answers_from_training():
+    # Nạp tài liệu huấn luyện có thông tin riêng (không có trong bộ Q&A)
+    marker = "Trưởng bộ môn chương trình SBI là TS. Nguyen Van DemoTest."
+    client.post("/api/admin/training", headers=ADMIN, json={"text": "Mở đầu.\n\n" + marker + "\n\nKết thúc."})
+    # Demo mode trả lời lấy từ tài liệu huấn luyện
+    r = client.post("/api/chat", json={"messages": [{"role": "user", "content": "Trưởng bộ môn là ai?"}]})
+    assert r.status_code == 200
+    assert "DemoTest" in r.text
+    # Dọn dẹp để không ảnh hưởng test khác
+    client.post("/api/admin/training", headers=ADMIN, json={"text": ""})
+
+
 # ----------------------- Đăng nhập & đổi mật khẩu admin -----------------------
 # (Các test này đặt CUỐI vì sẽ đặt mật khẩu mới, vô hiệu hoá mật khẩu mặc định.)
 

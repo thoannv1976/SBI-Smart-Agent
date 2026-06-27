@@ -140,7 +140,10 @@ def build_system_prompt(data_dir: Path | None = None) -> str:
     if training:
         training_block = (
             "\n\n================ TÀI LIỆU HUẤN LUYỆN BỔ SUNG ================\n"
-            "Thông tin bổ sung do quản trị viên cung cấp — dùng kết hợp với kho tri thức ở trên:\n\n"
+            "Đây là thông tin CHÍNH THỨC & cập nhật do quản trị viên cung cấp. HÃY ƯU TIÊN "
+            "dùng tài liệu này khi trả lời, KỂ CẢ số liệu cụ thể (học phí, nhân sự như "
+            "trưởng bộ môn, mốc thời gian...). Nếu có khác biệt với phần kho tri thức ở "
+            "trên thì LẤY THEO tài liệu này:\n\n"
             f"{training}\n"
             "================ HẾT TÀI LIỆU BỔ SUNG ================"
         )
@@ -297,13 +300,13 @@ def question_tokens(text: str) -> set[str]:
     return {t for t in _normalize(text).split() if t and t not in _STOPWORDS}
 
 
-def rank_qa(
+def rank_qa_scored(
     text: str,
     items: list[QAItem] | None = None,
     n: int = 3,
     exclude_ids: tuple[str, ...] = (),
-) -> list[QAItem]:
-    """Xếp hạng Q&A liên quan nhất tới `text` bằng độ trùng từ khoá."""
+) -> list[tuple[float, QAItem]]:
+    """Xếp hạng Q&A kèm điểm khớp từ khoá."""
     items = items if items is not None else load_qa_items()
     qt = question_tokens(text)
     if not qt:
@@ -318,10 +321,43 @@ def rank_qa(
         if score > 0:
             scored.append((score, it))
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [it for _, it in scored[:n]]
+    return scored[:n]
+
+
+def rank_qa(
+    text: str,
+    items: list[QAItem] | None = None,
+    n: int = 3,
+    exclude_ids: tuple[str, ...] = (),
+) -> list[QAItem]:
+    """Xếp hạng Q&A liên quan nhất tới `text` bằng độ trùng từ khoá."""
+    return [it for _, it in rank_qa_scored(text, items, n, exclude_ids)]
 
 
 def best_match(text: str, items: list[QAItem] | None = None) -> QAItem | None:
     """Q&A khớp nhất với câu hỏi (None nếu không khớp gì)."""
-    ranked = rank_qa(text, items, n=1)
-    return ranked[0] if ranked else None
+    ranked = rank_qa_scored(text, items, n=1)
+    return ranked[0][1] if ranked else None
+
+
+def _split_training(text: str) -> list[str]:
+    """Tách tài liệu huấn luyện thành các đoạn (theo dòng trống)."""
+    return [b.strip() for b in re.split(r"\n\s*\n", text) if b.strip()]
+
+
+def search_training(text: str, n: int = 1) -> list[tuple[float, str]]:
+    """Tìm các đoạn trong tài liệu huấn luyện khớp từ khoá nhất với câu hỏi."""
+    training = get_training_text()
+    if not training:
+        return []
+    qt = question_tokens(text)
+    if not qt:
+        return []
+    scored: list[tuple[float, str]] = []
+    for block in _split_training(training):
+        btoks = set(_normalize(block).split())
+        score = float(len(qt & btoks))
+        if score > 0:
+            scored.append((score, block))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return scored[:n]

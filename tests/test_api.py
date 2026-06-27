@@ -302,6 +302,14 @@ def test_suggestions_reflect_faq():
     assert isinstance(sug, list) and 0 < len(sug) <= 6
 
 
+def test_faq_endpoint():
+    r = client.get("/api/faq")
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert isinstance(items, list) and len(items) > 0
+    assert "question" in items[0] and "count" in items[0]
+
+
 # ----------------------------- Cổng portal -----------------------------
 
 

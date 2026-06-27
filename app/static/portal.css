@@ -133,6 +133,7 @@
   transition: transform .15s;
 }
 .chat-fab:hover { transform: scale(1.06); }
+.chat-widget[hidden] { display: none; }
 .chat-widget {
   position: fixed; bottom: 92px; right: 22px; z-index: 40;
   width: 390px; max-width: calc(100vw - 32px);

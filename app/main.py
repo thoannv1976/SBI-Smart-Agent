@@ -162,6 +162,24 @@ def related(req: RelatedRequest) -> dict:
     return {"related": related_questions(req.question, n=3)}
 
 
+@app.get("/api/faq")
+def faq() -> dict:
+    """Câu hỏi thường gặp (công khai) kèm số lượt đã hỏi — cho cột FAQ ở trang chat."""
+    items: list[dict] = []
+    seen: set[str] = set()
+    for t in top_questions(12):
+        q = (t.get("question") or "").strip()
+        if q and q not in seen:
+            seen.add(q)
+            items.append({"question": q, "count": int(t.get("count", 0) or 0)})
+    # Đệm bằng câu gợi ý tĩnh (count 0) để cột không trống khi chưa có dữ liệu
+    for q in get_suggested_questions(n=12):
+        if q and q not in seen and len(items) < 12:
+            seen.add(q)
+            items.append({"question": q, "count": 0})
+    return {"items": items}
+
+
 @app.get("/api/portal")
 def portal() -> dict:
     """Cấu hình cổng portal (công khai): video, khóa học, link tích hợp, mạng xã hội."""

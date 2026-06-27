@@ -125,6 +125,7 @@
         history.push({ role: "assistant", content: answer });
         await showRelated(text);
         maybeShowCTA();
+        loadFAQ();  // cập nhật lại số lượt hỏi ở cột FAQ
       } else {
         botBubble.innerHTML = formatMessage("Xin lỗi, mình chưa nhận được phản hồi. Bạn thử lại nhé!");
       }
@@ -311,6 +312,28 @@
     scrollToBottom();
   }
 
+  // ----------------------- Cột câu hỏi thường gặp (FAQ) -----------------------
+
+  async function loadFAQ() {
+    const box = document.getElementById("faqList");
+    if (!box) return;
+    try {
+      const data = await (await fetch("/api/faq")).json();
+      const items = data.items || [];
+      box.innerHTML = items
+        .map((it) => {
+          const badge = it.count > 0 ? `<span class="faq-count">${it.count}</span>` : "";
+          return `<button type="button" class="faq-item"><span class="faq-q">${escapeHtml(it.question)}</span>${badge}</button>`;
+        })
+        .join("");
+      [...box.querySelectorAll(".faq-item")].forEach((b, i) => {
+        b.addEventListener("click", () => sendMessage(items[i].question));
+      });
+    } catch (e) {
+      /* cột FAQ không bắt buộc */
+    }
+  }
+
   // ----------------------- Câu hỏi gợi ý -----------------------
 
   async function loadSuggestions() {
@@ -331,5 +354,6 @@
   }
 
   loadSuggestions();
+  loadFAQ();
   inputEl.focus();
 })();

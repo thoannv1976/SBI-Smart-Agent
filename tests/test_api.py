@@ -330,6 +330,9 @@ def test_admin_portal_save():
             {"title": "Khóa A", "url": "https://x.com", "desc": "Mô tả"},
             {"title": "", "url": ""},  # rỗng -> bị loại
         ],
+        "featured_posts": [
+            {"title": "Bài viết X", "url": "https://post.example.com", "desc": "Tóm tắt"},
+        ],
         "social": {"facebook": "https://fb.com/sbi"},
     }
     r = client.post("/api/admin/portal", headers=ADMIN, json=payload)
@@ -339,6 +342,8 @@ def test_admin_portal_save():
     assert len(cfg["youtube_video_ids"]) == 3  # cắt còn tối đa 3, bỏ rỗng
     assert len(cfg["featured_courses"]) == 1
     assert cfg["featured_courses"][0]["title"] == "Khóa A"
+    assert len(cfg["featured_posts"]) == 1
+    assert cfg["featured_posts"][0]["title"] == "Bài viết X"
     assert cfg["social"]["facebook"] == "https://fb.com/sbi"
     # phản ánh ở endpoint công khai
     assert client.get("/api/portal").json()["lms_url"] == "https://lms.example.com"

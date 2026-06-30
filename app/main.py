@@ -94,6 +94,7 @@ class PortalConfig(BaseModel):
     youtube_video_ids: list[str] = Field(default_factory=list)
     lms_url: str = ""
     featured_courses: list[dict] = Field(default_factory=list)
+    featured_posts: list[dict] = Field(default_factory=list)
     obe_url: str = ""
     career_test_url: str = ""
     social: dict = Field(default_factory=dict)

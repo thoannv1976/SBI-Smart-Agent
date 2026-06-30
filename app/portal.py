@@ -14,6 +14,7 @@ DEFAULTS: dict = {
     "youtube_video_ids": [],
     "lms_url": "",
     "featured_courses": [],  # [{title, desc, url, thumbnail}]
+    "featured_posts": [],    # [{title, desc, url, thumbnail}]
     "obe_url": "",
     "career_test_url": "",
     "social": {
@@ -36,22 +37,27 @@ def get_portal_config() -> dict:
     cfg["social"] = {**DEFAULTS["social"], **(stored.get("social") or {})}
     cfg["youtube_video_ids"] = list(stored.get("youtube_video_ids") or [])
     cfg["featured_courses"] = list(stored.get("featured_courses") or [])
+    cfg["featured_posts"] = list(stored.get("featured_posts") or [])
     return cfg
 
 
-def set_portal_config(data: dict) -> dict:
-    """Làm sạch & lưu cấu hình cổng; trả về cấu hình sau khi lưu."""
-    courses = []
-    for c in (data.get("featured_courses") or [])[:12]:
+def _clean_cards(items, limit: int = 12) -> list[dict]:
+    """Làm sạch danh sách thẻ (khóa học / bài viết): {title, desc, url, thumbnail}."""
+    out = []
+    for c in (items or [])[:limit]:
         if not isinstance(c, dict):
             continue
         title, url = _s(c.get("title")), _s(c.get("url"))
         if not title and not url:
             continue
-        courses.append(
+        out.append(
             {"title": title, "desc": _s(c.get("desc")), "url": url, "thumbnail": _s(c.get("thumbnail"))}
         )
+    return out
 
+
+def set_portal_config(data: dict) -> dict:
+    """Làm sạch & lưu cấu hình cổng; trả về cấu hình sau khi lưu."""
     social_in = data.get("social") or {}
     social = {k: _s(social_in.get(k)) for k in DEFAULTS["social"]}
 
@@ -61,7 +67,8 @@ def set_portal_config(data: dict) -> dict:
         "youtube_channel_url": _s(data.get("youtube_channel_url")),
         "youtube_video_ids": [_s(v) for v in (data.get("youtube_video_ids") or []) if _s(v)][:3],
         "lms_url": _s(data.get("lms_url")),
-        "featured_courses": courses,
+        "featured_courses": _clean_cards(data.get("featured_courses")),
+        "featured_posts": _clean_cards(data.get("featured_posts")),
         "obe_url": _s(data.get("obe_url")),
         "career_test_url": _s(data.get("career_test_url")),
         "social": social,

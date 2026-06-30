@@ -36,6 +36,15 @@
     return m ? m[1] : String(s).trim();
   }
 
+  function cardHTML(c, fallbackIcon) {
+    const thumb = c.thumbnail ? `style="background-image:url('${esc(c.thumbnail)}')"` : "";
+    const inner = `<div class="course-thumb" ${thumb}>${c.thumbnail ? "" : fallbackIcon}</div>
+      <div class="course-body"><h3>${esc(c.title || "")}</h3><p>${esc(c.desc || "")}</p></div>`;
+    return c.url
+      ? `<a class="course-card" href="${esc(c.url)}" target="_blank" rel="noopener">${inner}</a>`
+      : `<div class="course-card">${inner}</div>`;
+  }
+
   async function loadPortal() {
     let cfg = {};
     try {
@@ -64,21 +73,17 @@
       cl.hidden = false;
     }
 
+    // Bài viết nổi bật
+    const posts = (cfg.featured_posts || []).filter((c) => c && (c.title || c.url));
+    if (posts.length) {
+      $("postGrid").innerHTML = posts.map((c) => cardHTML(c, "📄")).join("");
+      $("bai-viet").hidden = false;
+    }
+
     // Khóa học nổi bật
     const courses = (cfg.featured_courses || []).filter((c) => c && (c.title || c.url));
     if (courses.length) {
-      $("courseGrid").innerHTML = courses
-        .map((c) => {
-          const thumb = c.thumbnail
-            ? `style="background-image:url('${esc(c.thumbnail)}')"`
-            : "";
-          const inner = `<div class="course-thumb" ${thumb}>${c.thumbnail ? "" : "📘"}</div>
-            <div class="course-body"><h3>${esc(c.title || "")}</h3><p>${esc(c.desc || "")}</p></div>`;
-          return c.url
-            ? `<a class="course-card" href="${esc(c.url)}" target="_blank" rel="noopener">${inner}</a>`
-            : `<div class="course-card">${inner}</div>`;
-        })
-        .join("");
+      $("courseGrid").innerHTML = courses.map((c) => cardHTML(c, "📘")).join("");
       $("khoa-hoc").hidden = false;
     }
     if (cfg.lms_url) {

@@ -545,18 +545,24 @@
       const rows = $("courseRows");
       rows.innerHTML = "";
       (d.featured_courses || []).forEach((c) => rows.appendChild(courseRow(c)));
+      const prows = $("postRows");
+      prows.innerHTML = "";
+      (d.featured_posts || []).forEach((c) => prows.appendChild(courseRow(c)));
     } catch (err) {
       showLogin(err.message);
     }
   }
 
   async function saveIntegrations() {
-    const courses = [...document.querySelectorAll("#courseRows .course-row")].map((r) => ({
-      title: r.querySelector(".c-title").value.trim(),
-      url: r.querySelector(".c-url").value.trim(),
-      desc: r.querySelector(".c-desc").value.trim(),
-      thumbnail: r.querySelector(".c-thumb").value.trim(),
-    }));
+    const collectCards = (sel) =>
+      [...document.querySelectorAll(sel + " .course-row")].map((r) => ({
+        title: r.querySelector(".c-title").value.trim(),
+        url: r.querySelector(".c-url").value.trim(),
+        desc: r.querySelector(".c-desc").value.trim(),
+        thumbnail: r.querySelector(".c-thumb").value.trim(),
+      }));
+    const courses = collectCards("#courseRows");
+    const posts = collectCards("#postRows");
     const social = {};
     SOCIAL.forEach((k) => (social[k] = ($("soc_" + k).value || "").trim()));
     const payload = {
@@ -570,6 +576,7 @@
       obe_url: $("intObe").value.trim(),
       career_test_url: $("intCareer").value.trim(),
       featured_courses: courses,
+      featured_posts: posts,
       social,
     };
     const msg = $("intMsg");
@@ -593,6 +600,7 @@
   }
 
   $("addCourse").addEventListener("click", () => $("courseRows").appendChild(courseRow()));
+  $("addPost").addEventListener("click", () => $("postRows").appendChild(courseRow()));
   $("saveIntegrations").addEventListener("click", saveIntegrations);
 
   // ----------------------------- Khởi động -----------------------------
